@@ -1,5 +1,5 @@
 animal3D: the minimal animation framework
-Copyright 2011-2025 Daniel S Buckstein
+Copyright 2011-2026 Daniel S Buckstein
 
 ANIMAL3D INSTALLATION INSTRUCTIONS
 
@@ -13,17 +13,17 @@ You can achieve all of these steps via the command prompt or interface of your c
 	cd animal3D
 
 2. Clone course repository here, then navigate to the new directory: 
-	git clone https://github.com/dbuckstein/animal3D-AdvAnimProg-FA25.git
+	git clone https://github.com/dbuckstein/animal3D-SDK-Source.git
 	cd animal3D*
 
-3. Initialize and update submodules: 
-	git submodule init
-	git submodule update
-
-4. Checkout starter branch and navigate to framework root (change 'dev' to the branch you want to be active; e.g. 'dev-anim-1'): 
+3. Checkout starter branch and navigate to framework root (change 'dev' to the branch you want to be active): 
 	git fetch
 	git checkout dev
 	cd animal3D*
+
+4. Initialize and update submodules: 
+	git submodule init
+	git submodule update
 
 5. Launch; **SELECT 'VERSION SELECTOR' AS APPLICATION TO USE; DO NOT UPGRADE SOLUTION; YOU MAY NEED TO CLOSE VISUAL STUDIO AND REPEAT THIS STEP ONLY AFTER THE FIRST TIME**: 
 	LAUNCH_VS_DEV.bat
