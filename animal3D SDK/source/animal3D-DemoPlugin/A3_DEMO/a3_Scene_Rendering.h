@@ -36,6 +36,8 @@
 
 #include "_animation/a3_HierarchyState.h"
 
+#include "_physics/a3_Ray.h"
+
 
 //-----------------------------------------------------------------------------
 
@@ -136,6 +138,12 @@ extern "C"
 
 		// control modes
 		a3_Scene_Rendering_ControlTarget ctrl_target;
+
+        // test ray and hull
+        a3_Hull   test_hull;
+        a3_Ray    test_ray;
+        a3boolean test_ray_fired;
+
 
 		// objects
 		union {

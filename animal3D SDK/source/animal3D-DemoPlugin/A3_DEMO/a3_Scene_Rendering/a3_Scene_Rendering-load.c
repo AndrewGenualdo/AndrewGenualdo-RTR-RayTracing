@@ -126,6 +126,11 @@ void a3rendering_init_scene(a3_DemoState const* demoState, a3_Scene_Rendering* s
      
         a3rendering_update_sceneGraph(scene, 0.0);
     }
+
+    // other
+    a3hullReset(&scene->test_hull);
+    a3rayReset(&scene->test_ray);
+    scene->test_ray_fired = a3false;
 }
 
 

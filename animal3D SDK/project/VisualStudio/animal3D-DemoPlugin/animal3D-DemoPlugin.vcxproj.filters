@@ -94,6 +94,12 @@
     <Filter Include="Source Files\common\A3_DEMO\a3_Scene_Rendering">
       <UniqueIdentifier>{a7a99048-0d8e-47dc-ae0b-7e1684e27c19}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\A3_DEMO\_physics">
+      <UniqueIdentifier>{64058f04-ba62-4fe1-ab85-6ea63f10afce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common\A3_DEMO\_physics">
+      <UniqueIdentifier>{ab612aef-a65f-4354-8ef3-64b79827ff88}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_src_win\main_dll.c">
@@ -189,6 +195,12 @@
     <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-unload.c">
       <Filter>Source Files\common\A3_DEMO\a3_Scene_Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\_physics\_src\a3_Ray.c">
+      <Filter>Source Files\common\A3_DEMO\_physics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\_physics\_src\a3_Hull.c">
+      <Filter>Source Files\common\A3_DEMO\_physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_DemoState.h">
@@ -238,6 +250,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering.h">
       <Filter>Header Files\A3_DEMO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\_physics\a3_Hull.h">
+      <Filter>Header Files\A3_DEMO\_physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\_physics\a3_Ray.h">
+      <Filter>Header Files\A3_DEMO\_physics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
