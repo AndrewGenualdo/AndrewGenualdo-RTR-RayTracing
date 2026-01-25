@@ -56,6 +56,10 @@ void a3animation_render_controls(a3_DemoState const* demoState, a3_Scene_Animati
 	a3_TextRenderer const* text, a3vec4 const col,
 	a3f32 const textAlign, a3f32 const textDepth, a3f32 const textOffsetDelta, a3f32 textOffset);
 
+void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Rendering const* scene,
+    a3_TextRenderer const* text, a3vec4 const col,
+    a3f32 const textAlign, a3f32 const textDepth, a3f32 const textOffsetDelta, a3f32 textOffset);
+
 
 // display current mode controls
 void a3demo_render_controls_global(a3_DemoState const* demoState,
@@ -95,6 +99,7 @@ void a3demo_render_controls(a3_DemoState const* demoState,
 	a3byte const* modeText[demoState_mode_max] = {
 		"STARTER SCENE",
 		"ANIMATION SCENE",
+		"RENDERING SCENE",
 	};
 
 	// demo mode
@@ -114,6 +119,10 @@ void a3demo_render_controls(a3_DemoState const* demoState,
 	case demoState_modeAnimation:
 		a3animation_render_controls(demoState, demoState->scene_animation, text, col, textAlign, textDepth, textOffsetDelta, textOffset);
 		break;
+
+    case demoState_modeRendering:
+        a3rendering_render_controls(demoState, demoState->scene_rendering, text, col, textAlign, textDepth, textOffsetDelta, textOffset);
+        break;
 	
 	}
 

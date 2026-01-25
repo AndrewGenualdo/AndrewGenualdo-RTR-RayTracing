@@ -18,16 +18,16 @@
 	animal3D SDK: Minimal 3D Animation Framework
 	By Daniel S. Buckstein
 
-	a3_Scene_Animation.h
-	Demo mode interface: animation scene.
+	a3_Scene_Rendering.h
+	Demo mode interface: rendering scene.
 
 	********************************************
 	*** THIS IS ONE DEMO MODE'S HEADER FILE  ***
 	********************************************
 */
 
-#ifndef __ANIMAL3D_SCENE_ANIMATION_H
-#define __ANIMAL3D_SCENE_ANIMATION_H
+#ifndef __ANIMAL3D_SCENE_RENDERING_H
+#define __ANIMAL3D_SCENE_RENDERING_H
 
 
 //-----------------------------------------------------------------------------
@@ -51,122 +51,122 @@ extern "C"
 	// maximum unique objects
 	enum
 	{
-		animationMaxCount_sceneObject = 24,
-		animationMaxCount_projector = 1,
+		renderingMaxCount_sceneObject = 24,
+		renderingMaxCount_projector = 1,
 	};
 
 	// scene object rendering program names
-	typedef enum a3_Scene_Animation_RenderProgramName
+	typedef enum a3_Scene_Rendering_RenderProgramName
 	{
-		animation_renderSolid,			// solid color
-		animation_renderTexture,		// textured
-		animation_renderLambert,		// Lambert shading model
-		animation_renderPhong,			// Phong shading model
+		rendering_renderSolid,			// solid color
+		rendering_renderTexture,		// textured
+		rendering_renderLambert,		// Lambert shading model
+		rendering_renderPhong,			// Phong shading model
 
-		animation_render_max
-	} a3_Scene_Animation_RenderProgramName;
+		rendering_render_max
+	} a3_Scene_Rendering_RenderProgramName;
 
 	// final display modes
-	typedef enum a3_Scene_Animation_DisplayProgramName
+	typedef enum a3_Scene_Rendering_DisplayProgramName
 	{
-		animation_displayTexture,			// display simple texture
+		rendering_displayTexture,			// display simple texture
 
-		animation_display_max
-	} a3_Scene_Animation_DisplayProgramName;
+		rendering_display_max
+	} a3_Scene_Rendering_DisplayProgramName;
 
 	// active camera names
-	typedef enum a3_Scene_Animation_ActiveCameraName
+	typedef enum a3_Scene_Rendering_ActiveCameraName
 	{
-		animation_cameraSceneViewer,		// scene viewing camera
+		rendering_cameraSceneViewer,		// scene viewing camera
 
-		animation_camera_max
-	} a3_Scene_Animation_ActiveCameraName;
+		rendering_camera_max
+	} a3_Scene_Rendering_ActiveCameraName;
 
 	// pipeline names
-	typedef enum a3_Scene_Animation_PipelineName
+	typedef enum a3_Scene_Rendering_PipelineName
 	{
-		animation_forward,				// forward lighting pipeline
+		rendering_forward,				// forward lighting pipeline
 
-		animation_pipeline_max
-	} a3_Scene_Animation_PipelineName;
+		rendering_pipeline_max
+	} a3_Scene_Rendering_PipelineName;
 
 	// render passes
-	typedef enum a3_Scene_Animation_PassName
+	typedef enum a3_Scene_Rendering_PassName
 	{
-		animation_passScene,				// render scene objects
-		animation_passComposite,			// composite layers
+		rendering_passScene,				// render scene objects
+		rendering_passComposite,			// composite layers
 
-		animation_pass_max
-	} a3_Scene_Animation_PassName;
+		rendering_pass_max
+	} a3_Scene_Rendering_PassName;
 
 	// render target names
-	typedef enum a3_Scene_Animation_TargetName
+	typedef enum a3_Scene_Rendering_TargetName
 	{
-		animation_scene_finalcolor = 0,	// final display color
-		animation_scene_fragdepth,		// fragment depth
+		rendering_scene_finalcolor = 0,	// final display color
+		rendering_scene_fragdepth,		// fragment depth
 	
-		animation_target_scene_max
-	} a3_Scene_Animation_TargetName;
+		rendering_target_scene_max
+	} a3_Scene_Rendering_TargetName;
 
 	// control targets
-	typedef enum a3_Scene_Animation_ControlTarget
+	typedef enum a3_Scene_Rendering_ControlTarget
 	{
-		animation_ctrl_camera,
-		animation_ctrl_teapot,
+		rendering_ctrl_camera,
+		rendering_ctrl_teapot,
 	
-		animation_ctrl_character,
+		rendering_ctrl_character,
 
-		animation_ctrl_character_rig,
-		animation_ctrl_neckLookat,
-		animation_ctrl_wristEffector_r,
-		animation_ctrl_wristConstraint_r,
-		animation_ctrl_wristEffector_l,
-		animation_ctrl_wristConstraint_l,
-		animation_ctrl_ankleEffector_r,
-		animation_ctrl_ankleConstraint_r,
-		animation_ctrl_ankleEffector_l,
-		animation_ctrl_ankleConstraint_l,
+		rendering_ctrl_character_rig,
+		rendering_ctrl_neckLookat,
+		rendering_ctrl_wristEffector_r,
+		rendering_ctrl_wristConstraint_r,
+		rendering_ctrl_wristEffector_l,
+		rendering_ctrl_wristConstraint_l,
+		rendering_ctrl_ankleEffector_r,
+		rendering_ctrl_ankleConstraint_r,
+		rendering_ctrl_ankleEffector_l,
+		rendering_ctrl_ankleConstraint_l,
 
-		animation_ctrlmode_max
-	} a3_Scene_Animation_ControlTarget;
+		rendering_ctrlmode_max
+	} a3_Scene_Rendering_ControlTarget;
 	
 	// input modes
-	typedef enum a3_Scene_Animation_InputMode
+	typedef enum a3_Scene_Rendering_InputMode
 	{
-		animation_input_direct,
-		animation_input_euler,
-		animation_input_kinematic,
-		animation_input_interpolate1,
-		animation_input_interpolate2,
+		rendering_input_direct,
+		rendering_input_euler,
+		rendering_input_kinematic,
+		rendering_input_interpolate1,
+		rendering_input_interpolate2,
 	
-		animation_inputmode_max
-	} a3_Scene_Animation_InputMode;
+		rendering_inputmode_max
+	} a3_Scene_Rendering_InputMode;
 
 	// display data for hierarchy drawing
-	typedef struct a3_Scene_Animation_HierarchyDisplayData
+	typedef struct a3_Scene_Rendering_HierarchyDisplayData
 	{
 		a3mat4 mvp_joint[128], mvp_bone[128], t_skin[128];
 		a3dualquat dq_skin[128];
-	} a3_Scene_Animation_HierarchyDisplayData;
+	} a3_Scene_Rendering_HierarchyDisplayData;
 
 
 //-----------------------------------------------------------------------------
 
 	// demo mode for basic shading
-	typedef struct a3_Scene_Animation
+	typedef struct a3_Scene_Rendering
 	{
-		a3_Scene_Animation_RenderProgramName render;
-		a3_Scene_Animation_DisplayProgramName display;
-		a3_Scene_Animation_ActiveCameraName activeCamera;
+		a3_Scene_Rendering_RenderProgramName render;
+		a3_Scene_Rendering_DisplayProgramName display;
+		a3_Scene_Rendering_ActiveCameraName activeCamera;
 
-		a3_Scene_Animation_PipelineName pipeline;
-		a3_Scene_Animation_PassName pass;
-		a3_Scene_Animation_TargetName targetIndex[animation_pass_max], targetCount[animation_pass_max];
+		a3_Scene_Rendering_PipelineName pipeline;
+		a3_Scene_Rendering_PassName pass;
+		a3_Scene_Rendering_TargetName targetIndex[rendering_pass_max], targetCount[rendering_pass_max];
 
 		// scene graph
 		a3_Hierarchy sceneGraph[1];
 		a3_HierarchyState sceneGraphState[1];
-		a3_SceneModelMatrixStack matrixStack[animationMaxCount_sceneObject];
+		a3_SceneModelMatrixStack matrixStack[renderingMaxCount_sceneObject];
 		
 		// skeletal animation controllers
 		union {
@@ -199,7 +199,7 @@ extern "C"
 		};
 		a3_Hierarchy hierarchy_skel[1];
 		a3_HierarchyPoseGroup hierarchyPoseGroup_skel[1];
-		a3_Scene_Animation_HierarchyDisplayData display_main;
+		a3_Scene_Rendering_HierarchyDisplayData display_main;
 		
 		// blend tree
 		a3_Hierarchy blendTree[1];
@@ -216,7 +216,7 @@ extern "C"
 					hierarchyState_skel_blend_result[1];
 			};
 		};
-		a3_Scene_Animation_HierarchyDisplayData display_tree[5];
+		a3_Scene_Rendering_HierarchyDisplayData display_tree[5];
 		
 		// blend operations
 		a3_BlendOpSet blendOpID[1], blendOpRET[1], blendOpCOPY[1], blendOpINV[1],
@@ -226,14 +226,14 @@ extern "C"
 		a3f64 axis_l[2], axis_r[2];
 		a3vec2 pos, vel, acc;
 		a3real rot, velr, accr;
-		a3_Scene_Animation_InputMode ctrl_position, ctrl_rotation;
+		a3_Scene_Rendering_InputMode ctrl_position, ctrl_rotation;
 
 		// control modes
-		a3_Scene_Animation_ControlTarget ctrl_target;
+		a3_Scene_Rendering_ControlTarget ctrl_target;
 
 		// objects
 		union {
-			a3_SceneObject object_scene[animationMaxCount_sceneObject];
+			a3_SceneObject object_scene[renderingMaxCount_sceneObject];
 			struct {
 				a3_SceneObject
 					obj_world_root[1];
@@ -263,13 +263,13 @@ extern "C"
 			};
 		};
 		union {
-			a3_SceneProjector projector[animationMaxCount_projector];
+			a3_SceneProjector projector[renderingMaxCount_projector];
 			struct {
 				a3_SceneProjector
 					proj_camera_main[1];
 			};
 		};
-	} a3_Scene_Animation;
+	} a3_Scene_Rendering;
 
 
 //-----------------------------------------------------------------------------
@@ -280,4 +280,4 @@ extern "C"
 #endif	// __cplusplus
 
 
-#endif	// !__ANIMAL3D_SCENE_ANIMATION_H
+#endif	// !__ANIMAL3D_SCENE_RENDERING_H

@@ -123,6 +123,11 @@ void a3animation_loadValidate(a3_DemoState const* demoState, a3_Scene_Animation*
 void a3animation_unload(a3_DemoState const* demoState, a3_Scene_Animation* scene);
 void a3animation_unloadValidate(a3_DemoState const* demoState, a3_Scene_Animation* scene);
 
+void a3rendering_load(a3_DemoState const* demoState, a3_Scene_Rendering* scene);
+void a3rendering_loadValidate(a3_DemoState const* demoState, a3_Scene_Rendering* scene);
+void a3rendering_unload(a3_DemoState const* demoState, a3_Scene_Rendering* scene);
+void a3rendering_unloadValidate(a3_DemoState const* demoState, a3_Scene_Rendering* scene);
+
 
 //-----------------------------------------------------------------------------
 // miscellaneous functions
@@ -160,10 +165,12 @@ void a3demo_load(a3_DemoState* demoState)
 {
 	// demo modes
 	//demoState->scene = demoState_modeStarter;
-	demoState->scene = demoState_modeAnimation;
+	//demoState->scene = demoState_modeAnimation;
+	demoState->scene = demoState_modeRendering;
 	demoState->sceneCallbacksPtr = demoState->sceneCallbacks + demoState->scene;
 	a3starter_load(demoState, demoState->scene_starter);
 	a3animation_load(demoState, demoState->scene_animation);
+	a3rendering_load(demoState, demoState->scene_rendering);
 
 
 	// geometry
@@ -198,6 +205,7 @@ void a3demo_unload(a3_DemoState* demoState)
 
 	a3starter_unload(demoState, demoState->scene_starter);
 	a3animation_unload(demoState, demoState->scene_animation);
+	a3rendering_unload(demoState, demoState->scene_rendering);
 }
 
 void a3scene_loadValidate(a3_DemoState* demoState)
@@ -205,12 +213,14 @@ void a3scene_loadValidate(a3_DemoState* demoState)
 	demoState->sceneCallbacksPtr = demoState->sceneCallbacks + demoState->scene;
 	a3starter_loadValidate(demoState, demoState->scene_starter);
 	a3animation_loadValidate(demoState, demoState->scene_animation);
+	a3rendering_loadValidate(demoState, demoState->scene_rendering);
 }
 
 void a3scene_unloadValidate(a3_DemoState* demoState)
 {
 	a3starter_unloadValidate(demoState, demoState->scene_starter);
 	a3animation_unloadValidate(demoState, demoState->scene_animation);
+	a3rendering_unloadValidate(demoState, demoState->scene_rendering);
 }
 
 void a3demo_idle(a3_DemoState* demoState, a3f64 const dt)

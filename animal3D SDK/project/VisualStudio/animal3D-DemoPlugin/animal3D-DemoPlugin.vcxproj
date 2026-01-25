@@ -204,6 +204,11 @@
     <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Animation\a3_Scene_Animation-idle-update.c" />
     <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Animation\a3_Scene_Animation-load.c" />
     <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Animation\a3_Scene_Animation-unload.c" />
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-idle-input.c" />
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-idle-render.c" />
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-idle-update.c" />
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-load.c" />
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-unload.c" />
     <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Starter\a3_Scene_Starter-idle-input.c" />
     <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Starter\a3_Scene_Starter-idle-render.c" />
     <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Starter\a3_Scene_Starter-idle-update.c" />
@@ -223,6 +228,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Animation.h" />
+    <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering.h" />
     <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Starter.h" />
     <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_DemoState.h" />
     <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\_a3_scene_utilities\a3_SceneMacros.h" />

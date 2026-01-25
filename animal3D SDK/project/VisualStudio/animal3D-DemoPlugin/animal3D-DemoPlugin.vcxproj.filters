@@ -91,6 +91,9 @@
     <Filter Include="Source Files\common\A3_DEMO\a3_Scene_Animation">
       <UniqueIdentifier>{213f9122-049c-4b4a-9421-303cce36c174}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\common\A3_DEMO\a3_Scene_Rendering">
+      <UniqueIdentifier>{a7a99048-0d8e-47dc-ae0b-7e1684e27c19}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="_src_win\main_dll.c">
@@ -171,6 +174,21 @@
     <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Animation\a3_Scene_Animation-unload.c">
       <Filter>Source Files\common\A3_DEMO\a3_Scene_Animation</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-idle-input.c">
+      <Filter>Source Files\common\A3_DEMO\a3_Scene_Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-idle-render.c">
+      <Filter>Source Files\common\A3_DEMO\a3_Scene_Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-idle-update.c">
+      <Filter>Source Files\common\A3_DEMO\a3_Scene_Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-load.c">
+      <Filter>Source Files\common\A3_DEMO\a3_Scene_Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering\a3_Scene_Rendering-unload.c">
+      <Filter>Source Files\common\A3_DEMO\a3_Scene_Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_DemoState.h">
@@ -216,6 +234,9 @@
       <Filter>Header Files\A3_DEMO\_animation</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Animation.h">
+      <Filter>Header Files\A3_DEMO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\a3_Scene_Rendering.h">
       <Filter>Header Files\A3_DEMO</Filter>
     </ClInclude>
   </ItemGroup>

@@ -45,6 +45,7 @@
 
 #include "a3_Scene_Starter.h"
 #include "a3_Scene_Animation.h"
+#include "a3_Scene_Rendering.h"
 
 
 //-----------------------------------------------------------------------------
@@ -62,6 +63,7 @@ typedef enum a3_DemoState_ModeName
 {
 	demoState_modeStarter,				// starter scene
 	demoState_modeAnimation,			// animation scene
+	demoState_modeRendering,			// rendering scene
 
 	demoState_mode_max
 } a3_DemoState_ModeName;
@@ -167,6 +169,7 @@ typedef struct a3_DemoState
 	// demo modes
 	a3_Scene_Starter scene_starter[1];
 	a3_Scene_Animation scene_animation[1];
+	a3_Scene_Rendering scene_rendering[1];
 	a3_DemoState_ModeName scene;
 	a3_SceneCallbacks sceneCallbacks[demoState_mode_max];
 	a3_SceneCallbacks const* sceneCallbacksPtr;
