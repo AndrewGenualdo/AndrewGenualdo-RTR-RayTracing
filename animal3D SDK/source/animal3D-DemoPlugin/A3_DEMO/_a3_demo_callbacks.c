@@ -185,8 +185,8 @@ void a3demo_load(a3_DemoState* demoState)
 
 	// set flags
 	demoState->displayGrid = a3true;
-	demoState->displayWorldAxes = a3true;
-	demoState->displayObjectAxes = a3true;
+	demoState->displayWorldAxes = a3false;
+	demoState->displayObjectAxes = a3false;
 	demoState->displayTangentBases = a3false;
 	demoState->displayWireframe = a3false;
 	demoState->displaySkybox = a3true;

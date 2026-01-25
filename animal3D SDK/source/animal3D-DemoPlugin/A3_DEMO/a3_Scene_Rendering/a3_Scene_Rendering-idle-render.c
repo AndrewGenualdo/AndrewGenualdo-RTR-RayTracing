@@ -72,7 +72,7 @@ void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Renderi
 
 	// active camera name
 	a3byte const* cameraText[rendering_camera_max] = {
-		"animation scene camera",
+		"rendering scene camera",
 	};
 
 	// constant color target names
@@ -97,35 +97,6 @@ void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Renderi
 		targetText_composite,
 	};
 
-	// controls
-	a3byte const* ctrlTargetName[rendering_ctrlmode_max] = {
-		"CAMERA",
-		"TEAPOT",
-
-		"CHARACTER",
-
-		"CHARACTER RIG",
-		"CHARACTER LOOKAT",
-		"CHARACTER WRIST EFFECTOR (R)",
-		"CHARACTER WRIST CONSTRAINT (R)",
-		"CHARACTER WRIST EFFECTOR (L)",
-		"CHARACTER WRIST CONSTRAINT (L)",
-		"CHARACTER ANKLE EFFECTOR (R)",
-		"CHARACTER ANKLE CONSTRAINT (R)",
-		"CHARACTER ANKLE EFFECTOR (L)",
-		"CHARACTER ANKLE CONSTRAINT (L)",
-	};
-
-	a3byte const* inputModeName[rendering_inputmode_max] = {
-		"Direct assignment",
-		"Euler integration",
-		"Kinematic integration",
-		"Interpolate to target value (fake velocity)",
-		"Interpolate to target velocity (fake acceleration)",
-	};
-	a3_Scene_Rendering_InputMode const inputPos = scene->ctrl_position;
-	a3_Scene_Rendering_InputMode const inputRot = scene->ctrl_rotation;
-
 	// pipeline and target
 	a3_Scene_Rendering_RenderProgramName const render = scene->render;
 	a3_Scene_Rendering_DisplayProgramName const display = scene->display;
@@ -134,7 +105,6 @@ void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Renderi
 	a3_Scene_Rendering_PassName const pass = scene->pass;
 	a3_Scene_Rendering_TargetName const targetIndex = scene->targetIndex[pass];
 	a3_Scene_Rendering_TargetName const targetCount = scene->targetCount[pass];
-	a3_Scene_Rendering_ControlTarget const ctrlTarget = scene->ctrl_target;
 
 	// demo modes
 	a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
@@ -144,24 +114,17 @@ void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Renderi
 	a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
 		"        Target (%u / %u) ('{' | '}'): %s", targetIndex + 1, targetCount, targetText[pass][targetIndex]);
 
-	// control
-	a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-		"    Control target (%u / %u) (';'/Dpad L | '\''/Dpad R): %s", ctrlTarget + 1, rendering_ctrlmode_max, ctrlTargetName[ctrlTarget]);
-
+    // lighting modes
+    a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+        "    Rendering mode (%u / %u) ('j' | 'k'): %s", render + 1, starter_render_max, renderProgramName[render]);
+    a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+        "    Display mode (%u / %u) ('J' | 'K'): %s", display + 1, starter_display_max, displayProgramName[display]);
+    a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+        "    Active camera (%u / %u) ('c' prev | next 'v'): %s", activeCamera + 1, starter_camera_max, cameraText[activeCamera]);
 }
 
 
 //-----------------------------------------------------------------------------
-
-//void a3demo_render_bloomIteration(a3_DemoState const* demoState, a3real2 pixelSize, a3_Framebuffer const* fbo_prev,
-//	a3_Framebuffer const* fbo_bright, a3_Framebuffer const* fbo_blur_horiz, a3_Framebuffer const* fbo_blur_vert);
-
-
-void a3demo_uploadHierarchyGraphics(
-	a3_UniformBuffer const* ubo_transform_joints, a3_UniformBuffer const* ubo_transform_bones, a3_UniformBuffer const* ubo_transform_skin,
-	a3mat4 const* transform_mvp_joints, a3mat4 const* transform_mvp_bones, a3mat4 const* transform_t_skin, a3dualquat const* transform_dq_skin,
-	a3ui32 const max_transforms, a3ui32 const numNodes);
-
 
 // sub-routine for rendering the demo state using the shading pipeline
 void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const* scene, a3f64 const dt)
@@ -228,20 +191,14 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 		demoState->draw_node,
 		demoState->draw_node,
 		demoState->draw_unit_box,		// skybox
-		demoState->draw_node,			// teapot
 
-		demoState->draw_node,			// character root
-		demoState->draw_node,
-		demoState->draw_node,
-		demoState->draw_node,
-		demoState->draw_node,
-		demoState->draw_node,
-		demoState->draw_node,
-		demoState->draw_node,
-		demoState->draw_node,
-		demoState->draw_node,
-		demoState->draw_node,
-		demoState->draw_character_skin,	// skinned model
+		demoState->draw_node,			// room root
+		demoState->draw_unit_box,       // boxes
+		demoState->draw_unit_box,       // 
+		demoState->draw_unit_sphere,    // spheres
+		demoState->draw_unit_sphere,    // 
+		demoState->draw_unit_sphere,    // light
+		demoState->draw_unit_box,       // room
 	};
 
 	// temp texture pointers
@@ -250,21 +207,31 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 		0,
 		0,
 		demoState->tex_checker,			// skybox
-		demoState->tex_checker,			// teapot
 		
-		0,								// character control
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
-		demoState->tex_checker,			// skinned model
+		0,                  			// room root
+		demoState->tex_checker,			// boxes
+		demoState->tex_checker,			// 
+		demoState->tex_checker,			// spheres
+		demoState->tex_checker,			// 
+		demoState->tex_checker,			// light
+		demoState->tex_checker,			// room
 	};
+
+    // model inversion
+    const a3boolean invert_model[] = {
+        0,
+        0,
+        0,
+        1,
+
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+    };
 
 	// forward pipeline shader programs
 	const a3_SceneShaderProgram* renderProgram[rendering_pipeline_max][rendering_render_max] = {
@@ -301,10 +268,6 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 	a3_Scene_Rendering_TargetName const targetIndex = scene->targetIndex[pass], targetCount = scene->targetCount[pass];
 	a3_Scene_Rendering_PassName currentPass;
 
-
-	// pixel size and effect axis
-//	a3vec2 pixelSize = a3vec2_one;
-
 	// FSQ matrix
 	const a3mat4 fsq = {
 		2.0f, 0.0f, 0.0f, 0.0f,
@@ -312,7 +275,6 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 		0.0f, 0.0f, 2.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f,
 	};
-
 
 	// bias matrix
 	const a3mat4 bias = {
@@ -341,10 +303,6 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 	a3real4x4Product(projectionBiasMat.m, bias.m, projectionMat.m);
 	a3real4x4Product(projectionBiasMat_inv.m, projectionMatInv.m, unbias.m);
 	
-	a3ui32 const max_mats = sizeof(scene->display_main.mvp_joint) / sizeof(*scene->display_main.mvp_joint);
-	a3ui32 const n_joints = scene->hierarchyState_skel->hierarchy->numNodes;
-	a3ui32 const n_nodes = sizeof(scene->hierarchyState_skel_blend) / sizeof(*scene->hierarchyState_skel_blend);
-
 
 	//-------------------------------------------------------------------------
 	// 0) PRE-SCENE PASS: shadow pass renders scene to depth-only
@@ -397,9 +355,9 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uPB_inv, 1, projectionBiasMat_inv.mm);
 	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, a3mat4_identity.mm);
 	a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, hueCount, rgba4->v);
-	if (demoState->updateAnimation)
-		a3shaderUniformSendDouble(a3unif_single, currentDemoProgram->uTime, 1, &scene->morph_time);
-
+    if (demoState->updateAnimation)
+        a3shaderUniformSendDouble(a3unif_single, currentDemoProgram->uTime, 1, &demoState->timer_display->totalTime);
+    
 	// select pipeline algorithm
 	glDisable(GL_BLEND);
 	switch (pipeline)
@@ -412,118 +370,68 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 		{
 		case rendering_renderSolid:
 		case rendering_renderTexture:
+			// individual object requirements: 
+			//	- modelviewprojection
+			//	- modelview
+			//	- modelview for normals
+			//	- per-object animation data
+			for (currentSceneObject = scene->obj_room_box, endSceneObject = scene->obj_room_enclosure,
+				j = (a3ui32)(currentSceneObject - scene->object_scene);
+				currentSceneObject <= endSceneObject;
+				++j, ++currentSceneObject)
+			{
+				// send data and draw
+				i = (j * 2 + 11) % hueCount;
+				currentDrawable = drawable[currentSceneObject - scene->obj_world_root];
+				a3textureActivate(texture_dm[j], a3tex_unit00);
+				a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, currentSceneObject->modelMat.m);
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
+				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, rgba4[i].v);
+				a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &j);
+                if (invert_model[j])
+                {
+                    glCullFace(GL_FRONT);
+                    a3vertexDrawableActivateAndRender(currentDrawable);
+                    glCullFace(GL_BACK);
+                }
+                else
+                {
+                    a3vertexDrawableActivateAndRender(currentDrawable);
+                }
+			}
+			break;
 		case rendering_renderLambert:
 		case rendering_renderPhong:
+			for (currentSceneObject = scene->obj_room_box, endSceneObject = scene->obj_room_enclosure,
+				j = (a3ui32)(currentSceneObject - scene->object_scene);
+				currentSceneObject <= endSceneObject;
+				++j, ++currentSceneObject)
+			{
+				// send data and draw
+				i = (j * 2 + 11) % hueCount;
+				currentDrawable = drawable[currentSceneObject - scene->obj_world_root];
+				a3textureActivate(texture_dm[j], a3tex_unit00);
+				a3textureActivate(texture_dm[j], a3tex_unit01);
+				a3real4x4Product(modelViewMat.m, activeCameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
+				a3scene_quickInvertTranspose_internal(modelViewMat.m);
+				modelViewMat.v3 = a3vec4_zero;
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
+				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, rgba4[i].v);
+				a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &j);
+                if (invert_model[j])
+                {
+                    glCullFace(GL_FRONT);
+                    a3vertexDrawableActivateAndRender(currentDrawable);
+                    glCullFace(GL_BACK);
+                }
+                else
+                {
+                    a3vertexDrawableActivateAndRender(currentDrawable);
+                }
+			}
 			break;
 		}
-		
-		// draw skinned object
-		currentDemoProgram = demoState->prog_drawPhong_skin;
-		a3shaderProgramActivate(currentDemoProgram->program);
-		a3shaderUniformBufferActivate(demoState->ubo_transformBlend, 1);
-		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, projectionMat.mm);
-		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, a3mat4_identity.mm);
-
-		for (currentSceneObject = scene->obj_skeleton, endSceneObject = scene->obj_skeleton;
-			currentSceneObject <= endSceneObject; ++currentSceneObject)
-		{
-			// send data and draw
-			j = (a3ui32)(currentSceneObject - scene->object_scene);
-			a3textureActivate(texture_dm[j], a3tex_unit00);
-			a3textureActivate(texture_dm[j], a3tex_unit01);
-			a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &j);
-
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[currentSceneObject->sceneGraphIndex].transformMat;
-
-			a3real4x4Product(modelViewMat.m, viewMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
-			a3scene_quickInvertTranspose_internal(modelViewMat.m);
-			modelViewMat.v3 = a3vec4_zero;
-
-			a3demo_uploadHierarchyGraphics(demoState->ubo_transformMVP, demoState->ubo_transformMVPB, demoState->ubo_transformBlend,
-				scene->display_main.mvp_joint, scene->display_main.mvp_bone, scene->display_main.t_skin, scene->display_main.dq_skin,
-				max_mats, n_joints);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, orange);
-			a3vertexDrawableActivateAndRender(demoState->draw_character_skin);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, sky);
-			a3vertexDrawableActivateAndRender(demoState->draw_character_skin_alt);
-
-			// draw blend nodes
-			if (demoState->displayHiddenVolumes)
-			{
-				// copy model matrix, select offsets and colors
-				a3mat4 const modelMat_copy = modelMat;
-
-				// idle_p, idle_f, idle_m, idle_fm, result
-				a3real3 const offset_debug[] = { { +5, +10, 0 }, { 0, +15, 0 }, { -10, +15, 0 }, { -5, +10, 0 }, { 0, +5, 0 } };
-				a3real const* color_debug[] = { blue, purple, rose, magenta, red };
-
-				for (j = 0; j < n_nodes; ++j)
-				{
-					modelMat = modelMat_copy;
-					a3real3Add(modelMat.v3.v, offset_debug[j]);
-
-					a3real4x4Product(modelViewMat.m, viewMat.m, modelMat.m);
-					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
-					a3scene_quickInvertTranspose_internal(modelViewMat.m);
-					modelViewMat.v3 = a3vec4_zero;
-
-					a3demo_uploadHierarchyGraphics(demoState->ubo_transformMVP, demoState->ubo_transformMVPB, demoState->ubo_transformBlend,
-						scene->display_tree[j].mvp_joint, scene->display_tree[j].mvp_bone, scene->display_tree[j].t_skin, scene->display_tree[j].dq_skin,
-						max_mats, n_joints);
-					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
-					a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, color_debug[j]);
-					a3vertexDrawableActivateAndRender(demoState->draw_character_skin);
-					a3vertexDrawableActivateAndRender(demoState->draw_character_skin_alt);
-				}
-
-				// re-upload main
-				a3demo_uploadHierarchyGraphics(demoState->ubo_transformMVP, demoState->ubo_transformMVPB, demoState->ubo_transformBlend,
-					scene->display_main.mvp_joint, scene->display_main.mvp_bone, scene->display_main.t_skin, scene->display_main.dq_skin,
-					max_mats, n_joints);
-			}
-		}
-
-		// draw morphing object
-		currentDemoProgram = demoState->prog_drawPhong_morph5;
-		a3shaderProgramActivate(currentDemoProgram->program);
-		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, activeCamera->projectionMat.mm);
-		a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, a3mat4_identity.mm);
-		if (demoState->updateAnimation)
-			a3shaderUniformSendDouble(a3unif_single, currentDemoProgram->uTime, 1, &scene->morph_time);
-		currentSceneObject = scene->obj_teapot;
-		j = (a3ui32)(currentSceneObject - scene->object_scene);
-		{
-			a3boolean const teapot_animate_color = true;
-
-			// send data and draw
-			i = (j * 2 + 11) % hueCount;
-			currentDrawable = demoState->draw_teapot_morph;
-			a3textureActivate(texture_dm[j], a3tex_unit00);
-			a3textureActivate(texture_dm[j], a3tex_unit01);
-			a3real4x4Product(modelViewMat.m, activeCameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
-			a3scene_quickInvertTranspose_internal(modelViewMat.m);
-			modelViewMat.v3 = a3vec4_zero;
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
-			if (teapot_animate_color)
-			{
-				a3real4 col_teapot;
-				a3ui32 const sampleIndex0 = scene->clipPool->keyframe[scene->clipCtrl_morph->keyframeIndex].sampleIndex0;
-				a3ui32 const sampleIndex1 = scene->clipPool->keyframe[scene->clipCtrl_morph->keyframeIndex].sampleIndex1;
-				a3f64 const keyframeParam = scene->clipCtrl_morph->keyframeParam;
-				a3real4Lerp(col_teapot, rgba4[(sampleIndex0 * 4) % hueCount].v, rgba4[(sampleIndex1 * 4) % hueCount].v, (a3real)keyframeParam);
-				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, col_teapot);
-			}
-			else
-			{
-				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, grey);
-			}
-			a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &j);
-			//a3vertexDrawableActivateAndRender(currentDrawable);
-		}
-
 	}	break;
 		// end forward scene pass
 	}
@@ -546,7 +454,7 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 	// composite skybox
 	currentDemoProgram = demoState->displaySkybox ? demoState->prog_drawTexture : demoState->prog_drawColorUnif;
 	modelMat = scene->sceneGraphState->objectSpace->hpose_base[scene->obj_skybox->sceneGraphIndex].transformMat;
-	a3scene_drawModelTexturedColored_invertModel(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m, a3mat4_identity.m, currentDemoProgram, demoState->draw_unit_box, demoState->tex_skybox_clouds, a3vec4_w.v);
+	a3scene_drawModelTexturedColored_invertModel(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m, a3mat4_identity.m, currentDemoProgram, demoState->draw_unit_box, demoState->tex_skybox_clouds, a3vec4_one.v);
 	a3scene_enableCompositeBlending();
 
 	// draw textured quad with previous pass image on it
@@ -687,51 +595,16 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 				a3shaderUniformSendFloat(a3unif_single, currentDemoProgram->uSize, 1, size);
 				// overlay flag
 				a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uFlag, 1, flag);
-
-				// skinning bases
-				currentDemoProgram = demoState->prog_drawTangentBasis_skin;
-				a3shaderProgramActivate(currentDemoProgram->program);
-				a3shaderUniformBufferActivate(demoState->ubo_transformBlend, 1);
-				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, projectionMat.mm);
-				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor0, hueCount, rgba4->v);
-				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, a3vec4_one.v);
-				a3shaderUniformSendFloat(a3unif_single, currentDemoProgram->uSize, 1, size);
-				a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uFlag, 1, flag);
-
-				for (currentSceneObject = scene->obj_skeleton, endSceneObject = scene->obj_skeleton;
-					currentSceneObject <= endSceneObject; ++currentSceneObject)
-				{
+                
+				// draw objects again
+				for (currentSceneObject = scene->obj_room_box, endSceneObject = scene->obj_room_enclosure,
 					j = (a3ui32)(currentSceneObject - scene->object_scene);
-					modelMat = scene->sceneGraphState->objectSpace->hpose_base[currentSceneObject->sceneGraphIndex].transformMat;
-					a3real4x4Product(modelViewMat.m, viewMat.m, modelMat.m);
-					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
-					a3scene_quickInvertTranspose_internal(modelViewMat.m);
-					modelViewMat.v3 = a3vec4_zero;
-					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
-					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, a3mat4_identity.mm);
-					i = (a3ui32)((a3vec4*)purple - rgba4);
-					a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &i);
-					a3vertexDrawableActivateAndRender(demoState->draw_character_skin);
-					i = (a3ui32)((a3vec4*)lime - rgba4);
-					a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &i);
-					a3vertexDrawableActivateAndRender(demoState->draw_character_skin_alt);
-				}
-
-				// morphing bases
-				currentDemoProgram = demoState->prog_drawTangentBasis_morph5;
-				a3shaderProgramActivate(currentDemoProgram->program);
-				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uP, 1, activeCamera->projectionMat.mm);
-				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor0, hueCount, rgba4->v);
-				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, a3vec4_one.v);
-				a3shaderUniformSendFloat(a3unif_single, currentDemoProgram->uSize, 1, size);
-				a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uFlag, 1, flag);
-				if (demoState->updateAnimation)
-					a3shaderUniformSendDouble(a3unif_single, currentDemoProgram->uTime, 1, &scene->morph_time);
-				currentSceneObject = scene->obj_teapot;
-				j = (a3ui32)(currentSceneObject - scene->object_scene);
+					currentSceneObject <= endSceneObject;
+					++j, ++currentSceneObject)
 				{
+					// calculate per-object uniforms
 					i = (j * 2 + 23) % hueCount;
-					currentDrawable = demoState->draw_teapot_morph;
+					currentDrawable = drawable[currentSceneObject - scene->obj_world_root];
 					a3real4x4Product(modelViewMat.m, activeCameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
 					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
 					a3scene_quickInvertTranspose_internal(modelViewMat.m);
@@ -739,7 +612,7 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
 					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, a3mat4_identity.mm);
 					a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &i);
-					//a3vertexDrawableActivateAndRender(currentDrawable);
+					a3vertexDrawableActivateAndRender(currentDrawable);
 				}
 			}
 
@@ -760,111 +633,7 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 		// hidden volumes
 		if (demoState->displayHiddenVolumes)
 		{
-			const a3_HierarchyState* currentHierarchyState;
-			const a3_Hierarchy* currentHierarchy;
 
-			// set up to draw skeleton
-			currentDemoProgram = demoState->prog_drawColorUnif_instanced;
-			a3shaderProgramActivate(currentDemoProgram->program);
-			currentHierarchyState = scene->hierarchyState_skel_final;
-			currentHierarchy = currentHierarchyState->hierarchy;
-
-			// draw skeletal joints
-			a3shaderUniformBufferActivate(demoState->ubo_transformMVP, 0);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, rose);
-			currentDrawable = demoState->draw_node;
-			a3vertexDrawableActivateAndRenderInstanced(currentDrawable, currentHierarchy->numNodes);
-
-			// draw bones
-			a3shaderProgramActivate(currentDemoProgram->program);
-			a3shaderUniformBufferActivate(demoState->ubo_transformMVPB, 0);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, sky);
-			currentDrawable = demoState->draw_link;
-			a3vertexDrawableActivateAndRenderInstanced(currentDrawable, currentHierarchy->numNodes);
-
-			// draw effectors
-			currentDemoProgram = demoState->prog_drawColorUnif;
-			a3shaderProgramActivate(currentDemoProgram->program);
-
-			i = (a3ui32)(scene->obj_skeleton_rig - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, cyan);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			i = (a3ui32)(scene->obj_skeleton_neckLookat_ctrl - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, cyan);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			i = (a3ui32)(scene->obj_skeleton_wristEffector_r_ctrl - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, magenta);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			i = (a3ui32)(scene->obj_skeleton_wristConstraint_r_ctrl - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, yellow);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			i = (a3ui32)(scene->obj_skeleton_wristEffector_l_ctrl - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, magenta);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			i = (a3ui32)(scene->obj_skeleton_wristConstraint_l_ctrl - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, yellow);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			i = (a3ui32)(scene->obj_skeleton_ankleEffector_r_ctrl - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, magenta);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			i = (a3ui32)(scene->obj_skeleton_ankleConstraint_r_ctrl - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, yellow);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			i = (a3ui32)(scene->obj_skeleton_ankleEffector_l_ctrl - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, magenta);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			i = (a3ui32)(scene->obj_skeleton_ankleConstraint_l_ctrl - scene->object_scene);
-			modelMat = scene->sceneGraphState->objectSpace->hpose_base[i].transformMat;
-			a3real4x4Product(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m);
-			a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMVP, 1, modelViewProjectionMat.mm);
-			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, yellow);
-			a3vertexDrawableActivateAndRender(drawable[i]);
-
-			// draw skeletal joint orientations
-			if (demoState->displayObjectAxes)
-			{
-				currentDemoProgram = demoState->prog_drawColorAttrib_instanced;
-				a3shaderProgramActivate(currentDemoProgram->program);
-				a3shaderUniformBufferActivate(demoState->ubo_transformMVP, 0);
-				currentDrawable = demoState->draw_axes;
-				a3vertexDrawableActivateAndRenderInstanced(currentDrawable, currentHierarchy->numNodes);
-			}
 		}
 
 
@@ -885,7 +654,7 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 		// individual objects (based on scene graph)
 		if (demoState->displayObjectAxes)
 		{
-			for (currentSceneObject = scene->obj_skeleton_ctrl, endSceneObject = scene->obj_skeleton_ctrl;
+			for (currentSceneObject = scene->obj_room_box, endSceneObject = scene->obj_room_enclosure;
 				currentSceneObject <= endSceneObject;
 				++currentSceneObject)
 			{

@@ -37,26 +37,9 @@
 
 void a3rendering_unload(a3_DemoState const* demoState, a3_Scene_Rendering* scene)
 {
-	a3ui32 i, j;
-
-	// blend tree
-	for (i = 0, j = scene->blendTree->numNodes; i < j; ++i)
-		a3hierarchyStateRelease(scene->hierarchyState_skel_blend + i);
-	a3hierarchyRelease(scene->blendTree);
-
-	// release skeleton and related assets
-	a3ui32 const n_hierarchy = sizeof(scene->hierarchyState_skel) / sizeof(a3_HierarchyState);
-	for (i = 0, j = n_hierarchy; i < j; ++i)
-		a3hierarchyStateRelease(scene->hierarchyState_skel + i);
-	a3hierarchyPoseGroupRelease(scene->hierarchyPoseGroup_skel);
-	a3hierarchyRelease(scene->hierarchy_skel);
-
 	// scene graph
 	a3hierarchyStateRelease(scene->sceneGraphState);
 	a3hierarchyRelease(scene->sceneGraph);
-
-	// clips
-	a3clipPoolRelease(scene->clipPool);
 }
 
 

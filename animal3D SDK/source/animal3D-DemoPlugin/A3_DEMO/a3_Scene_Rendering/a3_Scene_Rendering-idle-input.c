@@ -45,13 +45,13 @@ void a3rendering_input_keyCharPress(a3_DemoState const* demoState, a3_Scene_Rend
 	switch (asciiKey)
 	{
 		// toggle render program
-		//a3sceneCtrlCasesLoop(scene->render, rendering_render_max, 'k', 'j');
+		a3sceneCtrlCasesLoop(scene->render, rendering_render_max, 'k', 'j');
 
 		// toggle display program
-		//a3sceneCtrlCasesLoop(scene->display, rendering_display_max, 'K', 'J');
+		a3sceneCtrlCasesLoop(scene->display, rendering_display_max, 'K', 'J');
 
 		// toggle active camera
-		//a3sceneCtrlCasesLoop(scene->activeCamera, rendering_camera_max, 'v', 'c');
+		a3sceneCtrlCasesLoop(scene->activeCamera, rendering_camera_max, 'v', 'c');
 
 		// toggle pipeline mode
 		a3sceneCtrlCasesLoop(scene->pipeline, rendering_pipeline_max, ']', '[');
@@ -65,11 +65,11 @@ void a3rendering_input_keyCharPress(a3_DemoState const* demoState, a3_Scene_Rend
 		// toggle control target
 		a3sceneCtrlCasesLoop(scene->ctrl_target, rendering_ctrlmode_max, '\'', ';');
 
-		// toggle position input mode
-		a3sceneCtrlCasesLoop(scene->ctrl_position, rendering_inputmode_max, '=', '-');
+		//// toggle position input mode
+		//a3sceneCtrlCasesLoop(scene->ctrl_position, rendering_inputmode_max, '=', '-');
 		
-		// toggle rotation input mode
-		a3sceneCtrlCasesLoop(scene->ctrl_rotation, rendering_inputmode_max, '+', '_');
+		//// toggle rotation input mode
+		//a3sceneCtrlCasesLoop(scene->ctrl_rotation, rendering_inputmode_max, '+', '_');
 	}
 }
 
@@ -94,7 +94,7 @@ void a3demo_input_controlProjector(
 void a3rendering_input(a3_DemoState* demoState, a3_Scene_Rendering* scene, a3f64 const dt)
 {
 	a3_SceneProjector* projector = scene->projector + scene->activeCamera;
-	a3_SceneObject* sceneObject;
+	//a3_SceneObject* sceneObject;
 
 	// right click to ray pick
 	if (a3mouseGetState(demoState->mouse, a3mouse_right) == a3input_down)
@@ -125,57 +125,7 @@ void a3rendering_input(a3_DemoState* demoState, a3_Scene_Rendering* scene, a3f64
 		a3demo_input_controlProjector(demoState, projector,
 			dt, projector->ctrlMoveSpeed, projector->ctrlRotateSpeed, projector->ctrlZoomSpeed);
 		break;
-	case rendering_ctrl_teapot:
-		sceneObject = scene->obj_teapot;
-		a3demo_input_controlObject(demoState, sceneObject, dt, a3real_one, a3real_zero);
-		break;
-
-	case rendering_ctrl_character:
-		sceneObject = scene->obj_skeleton_ctrl + scene->ctrl_target - rendering_ctrl_character;
-		a3demo_input_controlObject(demoState, sceneObject, dt, a3real_one, a3real_zero);
-		break;
-
-	case rendering_ctrl_character_rig:
-	case rendering_ctrl_neckLookat:
-	case rendering_ctrl_wristEffector_r:
-	case rendering_ctrl_wristConstraint_r:
-	case rendering_ctrl_wristEffector_l:
-	case rendering_ctrl_wristConstraint_l:
-	case rendering_ctrl_ankleEffector_r:
-	case rendering_ctrl_ankleConstraint_r:
-	case rendering_ctrl_ankleEffector_l:
-	case rendering_ctrl_ankleConstraint_l:
-		sceneObject = scene->obj_skeleton_ctrl + scene->ctrl_target - rendering_ctrl_character;
-		a3demo_input_controlObject(demoState, sceneObject, dt, a3real_one, a3real_zero);
-		break;
 	}
-
-	// capture axes
-/*	if (a3XboxControlIsConnected(demoState->xcontrol))
-	{
-		// get directly from joysticks
-		a3XboxControlGetJoysticks(demoState->xcontrol, scene->axis_l, scene->axis_r);
-	}
-	else
-	{
-		// calculate normalized vectors given keyboard state
-		a3f64 lenInv;
-		scene->axis_l[0] = (a3f64)a3keyboardGetDifference(demoState->keyboard, a3key_D, a3key_A);
-		scene->axis_l[1] = (a3f64)a3keyboardGetDifference(demoState->keyboard, a3key_W, a3key_S);
-		scene->axis_r[0] = (a3f64)a3keyboardGetDifference(demoState->keyboard, a3key_L, a3key_J);
-		scene->axis_r[1] = (a3f64)a3keyboardGetDifference(demoState->keyboard, a3key_I, a3key_K);
-
-		lenInv = scene->axis_l[0] * scene->axis_l[0] + scene->axis_l[1] * scene->axis_l[1];
-		lenInv = __a3isNotNearZeroF64(lenInv) ? a3sqrtdInverse(lenInv) : __a3f64zero;
-		scene->axis_l[0] *= lenInv;
-		scene->axis_l[1] *= lenInv;
-
-		lenInv = scene->axis_r[0] * scene->axis_r[0] + scene->axis_r[1] * scene->axis_r[1];
-		lenInv = __a3isNotNearZeroF64(lenInv) ? a3sqrtdInverse(lenInv) : __a3f64zero;
-		scene->axis_r[0] *= lenInv;
-		scene->axis_r[1] *= lenInv;
-	}
-*/
 
 	// allow the controller, if connected, to change control targets
 	if (a3XboxControlIsConnected(demoState->xcontrol))
@@ -184,16 +134,6 @@ void a3rendering_input(a3_DemoState* demoState, a3_Scene_Rendering* scene, a3f64
 			a3sceneCtrlIncLoop(scene->ctrl_target, rendering_ctrlmode_max);
 		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_DPAD_left))
 			a3sceneCtrlDecLoop(scene->ctrl_target, rendering_ctrlmode_max);
-		
-		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_B))
-			a3sceneCtrlIncLoop(scene->ctrl_position, rendering_inputmode_max);
-		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_X))
-			a3sceneCtrlDecLoop(scene->ctrl_position, rendering_inputmode_max);
-		
-		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_Y))
-			a3sceneCtrlIncLoop(scene->ctrl_rotation, rendering_inputmode_max);
-		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_A))
-			a3sceneCtrlDecLoop(scene->ctrl_rotation, rendering_inputmode_max);
 	}
 }
 
