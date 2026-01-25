@@ -104,14 +104,15 @@ extern inline void a3scene_initProjector(a3_SceneProjector *projector)
 extern inline void a3scene_updateProjectorProjectionMat(a3_SceneProjector *projector, const a3boolean z_up)
 {
 	a3mat4 projection = a3mat4_identity;
+	a3mat4 projectionInv = a3mat4_identity;
 	if (projector->perspective)
 	{
-		a3real4x4MakePerspectiveProjection(projection.m, projector->projectionMatInv.m,
+		a3real4x4MakePerspectiveProjection(projection.m, projectionInv.m,
 			projector->fovy, projector->aspect, projector->znear, projector->zfar);
 	}
 	else
 	{
-		a3real4x4MakeOrthographicProjection(projection.m, projector->projectionMatInv.m,
+		a3real4x4MakeOrthographicProjection(projection.m, projectionInv.m,
 			projector->fovy * projector->aspect, projector->fovy, projector->znear, projector->zfar);
 	}
 	if (z_up)
@@ -119,16 +120,20 @@ extern inline void a3scene_updateProjectorProjectionMat(a3_SceneProjector *proje
 		a3mat4 postview;
 		a3real4x4SetRotateX(postview.m, -90);
 		a3real4x4Product(projector->projectionMat.m, projection.m, postview.m);
+        a3real4x4SetRotateX(postview.m, +90);
+        a3real4x4Product(projector->projectionMatInv.m, postview.m, projectionInv.m);
 	}
 	else
 	{
 		projector->projectionMat = projection;
+		projector->projectionMatInv = projectionInv;
 	}
 }
 
 extern inline void a3scene_updateProjectorViewProjectionMat(a3_SceneProjector *projector)
 {
 	a3real4x4Product(projector->viewProjectionMat.m, projector->projectionMat.m, projector->sceneObject->modelMatInv.m);
+	a3real4x4Product(projector->viewProjectionMatInv.m, projector->sceneObject->modelMat.m, projector->projectionMatInv.m);
 }
 
 

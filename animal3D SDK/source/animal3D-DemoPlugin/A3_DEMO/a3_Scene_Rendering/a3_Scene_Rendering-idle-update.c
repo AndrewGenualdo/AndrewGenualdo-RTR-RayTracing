@@ -90,19 +90,46 @@ void a3rendering_update(a3_DemoState* demoState, a3_Scene_Rendering* scene, a3f6
 	a3_SceneProjector const* activeCamera = scene->projector + scene->activeCamera;
 	a3_SceneObject const* activeCameraObject = activeCamera->sceneObject;
 
+    // bias matrix
+    const a3mat4 bias = {
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f,
+    };
+    const a3mat4 unbias = {
+         2.0f,  0.0f,  0.0f, 0.0f,
+         0.0f,  2.0f,  0.0f, 0.0f,
+         0.0f,  0.0f,  2.0f, 0.0f,
+        -1.0f, -1.0f, -1.0f, 1.0f,
+    };
+
 	// update scene graph local transforms
 	a3rendering_update_sceneGraph(scene, dt);
 
-	// update matrix stack data using scene graph
+	// update model matrix stack data using scene graph
 	for (i = 0; i < renderingMaxCount_sceneObject; ++i)
 	{
-		a3scene_updateModelMatrixStack(scene->matrixStack + i,
+		a3scene_updateModelMatrixStack(scene->modelMatrixStack + i,
 			activeCamera->projectionMat.m,
-			scene->sceneGraphState->objectSpace->hpose_base[scene->obj_camera_main->sceneGraphIndex].transformMat.m,
-			scene->sceneGraphState->objectSpaceInv->hpose_base[scene->obj_camera_main->sceneGraphIndex].transformMat.m,
+			scene->sceneGraphState->objectSpace->hpose_base[activeCameraObject->sceneGraphIndex].transformMat.m,
+			scene->sceneGraphState->objectSpaceInv->hpose_base[activeCameraObject->sceneGraphIndex].transformMat.m,
 			scene->sceneGraphState->objectSpace->hpose_base[scene->object_scene[i].sceneGraphIndex].transformMat.m,
 			a3mat4_identity.m);
 	}
+
+    // update viewer matrix stack data using scene graph
+    for (i = 0; i < renderingMaxCount_projector; ++i)
+    {
+        activeCamera = scene->projector + i;
+        activeCameraObject = activeCamera->sceneObject;
+        a3scene_updateViewerMatrixStack(scene->viewerMatrixStack + i,
+            scene->sceneGraphState->objectSpace->hpose_base[activeCameraObject->sceneGraphIndex].transformMat.m,
+            scene->sceneGraphState->objectSpaceInv->hpose_base[activeCameraObject->sceneGraphIndex].transformMat.m,
+            activeCamera->projectionMat.m,
+            activeCamera->projectionMatInv.m,
+            bias.m, unbias.m);
+    }
 }
 
 

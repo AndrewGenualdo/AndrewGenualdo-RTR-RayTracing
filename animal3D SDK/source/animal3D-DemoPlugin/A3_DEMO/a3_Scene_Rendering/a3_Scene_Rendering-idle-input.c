@@ -70,6 +70,11 @@ void a3rendering_input_keyCharPress(a3_DemoState const* demoState, a3_Scene_Rend
 		
 		//// toggle rotation input mode
 		//a3sceneCtrlCasesLoop(scene->ctrl_rotation, rendering_inputmode_max, '+', '_');
+
+    case '/':
+        a3rayReset(&scene->test_ray);
+        scene->test_ray_fired = a3false;
+        break;
 	}
 }
 
@@ -103,18 +108,22 @@ void a3rendering_input(a3_DemoState* demoState, a3_Scene_Rendering* scene, a3f64
 		a3i32 const x = a3mouseGetX(demoState->mouse) + demoState->frameBorder;
 		a3i32 const y = a3mouseGetY(demoState->mouse) + demoState->frameBorder;
 
-		// transform to NDC
+		// transform to NDC on near plane
 		a3vec4 coord = a3vec4_one;
 		coord.x = +((a3real)x * demoState->frameWidthInv * a3real_two - a3real_one);
 		coord.y = -((a3real)y * demoState->frameHeightInv * a3real_two - a3real_one);
 		coord.z = -a3real_one;
 
-		// transform to view space
-		a3real4Real4x4Mul(projector->projectionMatInv.m, coord.v);
-		a3real4DivS(coord.v, coord.w);
+        // transform to world space
+        a3real4Real4x4Mul(projector->viewProjectionMatInv.m, coord.v);
 
-		// transform to world space
-		a3real4Real4x4Mul(projector->sceneObject->modelMat.m, coord.v);
+        // perspective multiply (divide by w component inverse)
+        a3real4DivS(coord.v, coord.w);
+
+        // TEST RAY
+        a3rayInitTarget(&scene->test_ray, projector->sceneObject->modelMat.v3.v, coord.v);
+        //a3rayInitTargetUnit(&scene->test_ray, projector->sceneObject->modelMat.v3.v, coord.v);
+        scene->test_ray_fired = a3true;
 	}
 	
 	// choose control target

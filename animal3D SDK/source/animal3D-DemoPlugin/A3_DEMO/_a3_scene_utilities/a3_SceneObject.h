@@ -85,6 +85,7 @@ extern "C"
 		a3mat4 projectionMat;				// projection matrix
 		a3mat4 projectionMatInv;			// inverse projection matrix
 		a3mat4 viewProjectionMat;			// concatenation of view-projection
+        a3mat4 viewProjectionMatInv;        // inverse concatenation of view-projection
 		a3boolean perspective;				// perspective or orthographic
 		a3real fovy;						// persp: vert field of view/ortho: vert size
 		a3real aspect;						// aspect ratio

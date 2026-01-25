@@ -121,6 +121,10 @@ void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Renderi
         "    Display mode (%u / %u) ('J' | 'K'): %s", display + 1, starter_display_max, displayProgramName[display]);
     a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
         "    Active camera (%u / %u) ('c' prev | next 'v'): %s", activeCamera + 1, starter_camera_max, cameraText[activeCamera]);
+
+    // tests
+    a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+        "    Test ray fired: %s", (scene->test_ray_fired ? "TRUE" : "FALSE"));
 }
 
 
@@ -633,7 +637,20 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 		// hidden volumes
 		if (demoState->displayHiddenVolumes)
 		{
+            // ray fired
+            if (scene->test_ray_fired)
+            {
+                a3_SceneProjector const* projector = scene->projector + scene->activeCamera;
 
+                modelMat = projector->sceneObject->modelMat;
+                a3real3MulS(modelMat.v0.v, (a3real)(0.025));
+                a3real3MulS(modelMat.v1.v, (a3real)(0.025));
+                a3real3MulS(modelMat.v2.v, (a3real)(0.025));
+                a3rayComputePos(modelMat.v3.v, scene->test_ray.p_origin.v, scene->test_ray.v_direction.v, a3real_zero);
+                a3scene_drawModelSolidColor(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m, demoState->prog_drawColorUnif, demoState->draw_unit_sphere, blue);
+                a3rayComputePos(modelMat.v3.v, scene->test_ray.p_origin.v, scene->test_ray.v_direction.v, a3real_four);
+                a3scene_drawModelSolidColor(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m, demoState->prog_drawColorUnif, demoState->draw_unit_sphere, red);
+            }
 		}
 
 

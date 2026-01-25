@@ -134,7 +134,8 @@ extern "C"
 		// scene graph
 		a3_Hierarchy sceneGraph[1];
 		a3_HierarchyState sceneGraphState[1];
-		a3_SceneModelMatrixStack matrixStack[renderingMaxCount_sceneObject];
+		a3_SceneModelMatrixStack modelMatrixStack[renderingMaxCount_sceneObject];
+        a3_SceneViewerMatrixStack viewerMatrixStack[renderingMaxCount_projector];
 
 		// control modes
 		a3_Scene_Rendering_ControlTarget ctrl_target;
