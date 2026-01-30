@@ -124,7 +124,9 @@ void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Renderi
 
     // tests
     a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-        "    Test ray fired: %s", (scene->test_ray_fired ? "TRUE" : "FALSE"));
+        "    Test ray fired: %s", (scene->test_ray_fired ? "TRUE " : "FALSE"));
+    a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
+        "        Hit: %s; t=%lf", (scene->test_ray_hit ? "TRUE " : "FALSE"), (a3f64)scene->test_ray_param);
 }
 
 
@@ -641,6 +643,8 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
             if (scene->test_ray_fired)
             {
                 a3_SceneProjector const* projector = scene->projector + scene->activeCamera;
+                a3real const* const color = scene->test_ray_hit ? green : red;
+                a3real const param = scene->test_ray_hit ? scene->test_ray_param : a3real_four;
 
                 modelMat = projector->sceneObject->modelMat;
                 a3real3MulS(modelMat.v0.v, (a3real)(0.025));
@@ -648,8 +652,8 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
                 a3real3MulS(modelMat.v2.v, (a3real)(0.025));
                 a3rayComputePos(modelMat.v3.v, scene->test_ray.p_origin.v, scene->test_ray.v_direction.v, a3real_zero);
                 a3scene_drawModelSolidColor(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m, demoState->prog_drawColorUnif, demoState->draw_unit_sphere, blue);
-                a3rayComputePos(modelMat.v3.v, scene->test_ray.p_origin.v, scene->test_ray.v_direction.v, a3real_four);
-                a3scene_drawModelSolidColor(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m, demoState->prog_drawColorUnif, demoState->draw_unit_sphere, red);
+                a3rayComputePos(modelMat.v3.v, scene->test_ray.p_origin.v, scene->test_ray.v_direction.v, param);
+                a3scene_drawModelSolidColor(modelViewProjectionMat.m, viewProjectionMat.m, modelMat.m, demoState->prog_drawColorUnif, demoState->draw_unit_sphere, color);
             }
 		}
 

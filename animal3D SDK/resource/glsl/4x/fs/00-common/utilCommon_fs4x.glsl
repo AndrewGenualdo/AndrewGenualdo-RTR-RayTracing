@@ -29,7 +29,7 @@
 #define iValInvSq	3
 
 #define LIGHTING_DOUBLESIDED_LAMBERT
-//#define LIGHTING_DOUBLESIDED_PHONG
+#define LIGHTING_DOUBLESIDED_PHONG
 
 
 float lenSq(float x)
@@ -98,17 +98,18 @@ void Lambert(out float kd, in vec4 n, in vec4 vl)
 void Phong(out float kd, out float ks, out vec4 vr, in vec4 n, in vec4 vl, in vec4 ve)
 {
 	kd = dot(n, vl);
-	vr = refl(kd, n, vl);
+	vr = reflect(-vl, n);
 	ks = dot(vr, ve);
+	float ks_clamp = max(0.0, ks);
 #ifdef LIGHTING_DOUBLESIDED_PHONG
 	kd = abs(kd);
 	ks = abs(ks);
 #else // #ifdef LIGHTING_DOUBLESIDED_PHONG
 	kd = max(0.0, kd);
-	ks = max(0.0, ks);
+	ks = ks_clamp;
 #endif // #else // #ifdef LIGHTING_DOUBLESIDED_PHONG
 	kd = kd * 0.9 + 0.1;
-	ks = pow64(ks);
+	ks = pow64(ks_clamp);
 }
 
 

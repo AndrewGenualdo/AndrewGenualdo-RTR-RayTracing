@@ -130,7 +130,9 @@ void a3rendering_init_scene(a3_DemoState const* demoState, a3_Scene_Rendering* s
     // other
     a3hullReset(&scene->test_hull);
     a3rayReset(&scene->test_ray);
+    scene->test_ray_param = a3real_zero;
     scene->test_ray_fired = a3false;
+    scene->test_ray_hit   = a3false;
 }
 
 

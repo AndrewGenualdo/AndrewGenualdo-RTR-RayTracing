@@ -143,7 +143,9 @@ extern "C"
         // test ray and hull
         a3_Hull   test_hull;
         a3_Ray    test_ray;
+        a3real    test_ray_param;
         a3boolean test_ray_fired;
+        a3boolean test_ray_hit;
 
 
 		// objects

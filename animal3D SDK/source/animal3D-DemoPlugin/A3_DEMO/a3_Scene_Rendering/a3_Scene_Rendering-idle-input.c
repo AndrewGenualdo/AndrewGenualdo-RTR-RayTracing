@@ -73,7 +73,9 @@ void a3rendering_input_keyCharPress(a3_DemoState const* demoState, a3_Scene_Rend
 
     case '/':
         a3rayReset(&scene->test_ray);
+        scene->test_ray_param = a3real_zero;
         scene->test_ray_fired = a3false;
+        scene->test_ray_hit   = a3false;
         break;
 	}
 }
@@ -120,10 +122,23 @@ void a3rendering_input(a3_DemoState* demoState, a3_Scene_Rendering* scene, a3f64
         // perspective multiply (divide by w component inverse)
         a3real4DivS(coord.v, coord.w);
 
-        // TEST RAY
-        a3rayInitTarget(&scene->test_ray, projector->sceneObject->modelMat.v3.v, coord.v);
-        //a3rayInitTargetUnit(&scene->test_ray, projector->sceneObject->modelMat.v3.v, coord.v);
+        // ****TO-DO-RTR-PROJECT-2: TEST RAY HIT
+        a3rayInitTargetUnit(&scene->test_ray, projector->sceneObject->modelMat.v3.v, coord.v);
+        //a3rayInitTarget(&scene->test_ray, projector->sceneObject->modelMat.v3.v, coord.v);
         scene->test_ray_fired = a3true;
+        {
+            // Test collision with one of the scene objects, e.g. sphere.
+            // Knowns: origin and direction of ray; known point of reference; shape dimensions.
+            a3vec3 const P0 = scene->test_ray.p_origin.xyz;      //ray origin
+            a3vec3 const p  = scene->test_ray.v_direction.xyz;   //ray direction (assume normalized here)
+            a3vec3 const Q0 = scene->obj_room_sphere[0].position;//object center
+            a3real const r  = scene->obj_room_sphere[0].scale.x; //sphere radius (stored here as scale)
+
+            (void)P0;
+            (void)p;
+            (void)Q0;
+            (void)r;
+        }
 	}
 	
 	// choose control target
