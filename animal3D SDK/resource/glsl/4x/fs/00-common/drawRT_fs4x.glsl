@@ -29,6 +29,35 @@ in vbVertexData {
 	vec4 vTexcoord_atlas;
 };
 
+#define MAX_MODELS 24
+#define MAX_VIEWERS 1
+struct sModelStack
+{
+	mat4 modelMat;						// model matrix (object -> world)
+	mat4 modelMatInverse;				// model inverse matrix (world -> object)
+	mat4 modelMatInverseTranspose;		// model inverse-transpose matrix (object -> world skewed)
+	mat4 modelViewMat;					// model-view matrix (object -> viewer)
+	mat4 modelViewMatInverse;			// model-view inverse matrix (viewer -> object)
+	mat4 modelViewMatInverseTranspose;	// model-view inverse transpose matrix (object -> viewer skewed)
+	mat4 modelViewProjectionMat;		// model-view-projection matrix (object -> clip)
+	mat4 atlasMat;						// atlas matrix (texture -> cell)
+};
+struct sViewerStack
+{
+	mat4 projectionMat;					// projection matrix (viewer -> clip)
+	mat4 projectionMatInverse;			// projection inverse matrix (clip -> viewer)
+	mat4 projectionBiasMat;				// projection-bias matrix (viewer -> biased clip)
+	mat4 projectionBiasMatInverse;		// projection-bias inverse matrix (biased clip -> viewer)
+	mat4 viewProjectionMat;				// view-projection matrix (world -> clip)
+	mat4 viewProjectionMatInverse;		// view-projection inverse matrix (clip -> world)
+	mat4 viewProjectionBiasMat;			// view projection-bias matrix (world -> biased clip)
+	mat4 viewProjectionBiasMatInverse;	// view-projection-bias inverse matrix (biased clip -> world)
+};
+uniform ubTransformStack {
+	sViewerStack viewer_stack[MAX_VIEWERS];
+	sModelStack model_stack[MAX_MODELS];
+};
+
 uniform vec4 uColor;
 
 uniform sampler2D uTex_dm;

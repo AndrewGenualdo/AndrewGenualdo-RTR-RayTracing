@@ -105,7 +105,7 @@ extern "C"
 		a3real radiusSq;					// radius squared (if needed)
 		a3real radiusInv;					// radius inverse (also used for attenuation sometimes)
 		a3real radiusInvSq;					// radius inverse squared (attenuation factor)
-	}a3_ScenePointLight;
+	} a3_ScenePointLight;
 
 
 //-----------------------------------------------------------------------------

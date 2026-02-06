@@ -133,6 +133,11 @@ void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Renderi
 
 //-----------------------------------------------------------------------------
 
+void a3demo_uploadTransformStacks(
+    a3_UniformBuffer const* ubo_transform_stacks,
+    a3_SceneModelMatrixStack const* model_matrix_stacks, a3_SceneViewerMatrixStack const* viewer_matrix_stacks,
+    a3ui32 const max_models, a3ui32 const num_models, a3ui32 const max_viewers, a3ui32 const num_viewers);
+
 // sub-routine for rendering the demo state using the shading pipeline
 void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const* scene, a3f64 const dt)
 {
@@ -440,6 +445,12 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 			}
 			break;
 		case rendering_renderRT:
+            a3demo_uploadTransformStacks(demoState->ubo_transformStack,
+                &scene->modelMatrixStack[scene->obj_room_box - scene->object_scene],
+                &scene->viewerMatrixStack[scene->proj_camera_main - scene->projector],
+                renderingMaxCount_sceneObject, (a3ui32)(scene->obj_room_enclosure - scene->obj_room),
+                renderingMaxCount_projector, 1);
+            a3shaderUniformBufferActivate(demoState->ubo_transformStack, 0);
 			for (currentSceneObject = scene->obj_room_enclosure, endSceneObject = scene->obj_room_enclosure,
 				j = (a3ui32)(currentSceneObject - scene->object_scene);
 				currentSceneObject <= endSceneObject;

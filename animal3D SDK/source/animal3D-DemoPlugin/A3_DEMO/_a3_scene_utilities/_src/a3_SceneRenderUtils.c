@@ -314,6 +314,15 @@ inline a3real2r a3demo_integrateKinematic2(a3real2p y, a3real2p const x, a3real2
 	return y;
 }
 
+void a3demo_uploadTransformStacks(
+    a3_UniformBuffer const* ubo_transform_stacks,
+    a3_SceneModelMatrixStack const* model_matrix_stacks, a3_SceneViewerMatrixStack const* viewer_matrix_stacks,
+    a3ui32 const max_models, a3ui32 const num_models, a3ui32 const max_viewers, a3ui32 const num_viewers)
+{
+    a3bufferFixedRefill(ubo_transform_stacks, 0, num_viewers * sizeof(a3_SceneViewerMatrixStack), viewer_matrix_stacks);
+    a3bufferFixedRefillOffset(ubo_transform_stacks, 0, max_viewers * sizeof(a3_SceneViewerMatrixStack), num_models * sizeof(a3_SceneModelMatrixStack), model_matrix_stacks);
+}
+
 void a3demo_uploadHierarchyGraphics(
 	a3_UniformBuffer const* ubo_transform_joints, a3_UniformBuffer const* ubo_transform_bones, a3_UniformBuffer const* ubo_transform_skin,
 	a3mat4 const* transform_mvp_joints, a3mat4 const* transform_mvp_bones, a3mat4 const* transform_t_skin, a3dualquat const* transform_dq_skin,
