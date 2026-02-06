@@ -63,6 +63,7 @@ extern "C"
 		rendering_renderTexture,		// textured
 		rendering_renderLambert,		// Lambert shading model
 		rendering_renderPhong,			// Phong shading model
+        rendering_renderRT,             // ray-tracing
 
 		rendering_render_max
 	} a3_Scene_Rendering_RenderProgramName;

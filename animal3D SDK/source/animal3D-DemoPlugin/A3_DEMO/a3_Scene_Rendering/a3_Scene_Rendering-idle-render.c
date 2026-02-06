@@ -63,6 +63,7 @@ void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Renderi
 		"Texture",
 		"Lambert shading",
 		"Phong shading",
+		"Ray-tracing",
 	};
 
 	// forward display names
@@ -116,11 +117,11 @@ void a3rendering_render_controls(a3_DemoState const* demoState, a3_Scene_Renderi
 
     // lighting modes
     a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-        "    Rendering mode (%u / %u) ('j' | 'k'): %s", render + 1, starter_render_max, renderProgramName[render]);
+        "    Rendering mode (%u / %u) ('j' | 'k'): %s", render + 1, rendering_render_max, renderProgramName[render]);
     a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-        "    Display mode (%u / %u) ('J' | 'K'): %s", display + 1, starter_display_max, displayProgramName[display]);
+        "    Display mode (%u / %u) ('J' | 'K'): %s", display + 1, rendering_display_max, displayProgramName[display]);
     a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
-        "    Active camera (%u / %u) ('c' prev | next 'v'): %s", activeCamera + 1, starter_camera_max, cameraText[activeCamera]);
+        "    Active camera (%u / %u) ('c' prev | next 'v'): %s", activeCamera + 1, rendering_camera_max, cameraText[activeCamera]);
 
     // tests
     a3textDraw(text, textAlign, textOffset += textOffsetDelta, textDepth, col.r, col.g, col.b, col.a,
@@ -246,6 +247,7 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 			demoState->prog_drawTexture,
 			demoState->prog_drawLambert,
 			demoState->prog_drawPhong,
+            demoState->prog_drawRT,
 		},
 	};
 
@@ -409,6 +411,36 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 		case rendering_renderLambert:
 		case rendering_renderPhong:
 			for (currentSceneObject = scene->obj_room_box, endSceneObject = scene->obj_room_enclosure,
+				j = (a3ui32)(currentSceneObject - scene->object_scene);
+				currentSceneObject <= endSceneObject;
+				++j, ++currentSceneObject)
+			{
+				// send data and draw
+				i = (j * 2 + 11) % hueCount;
+				currentDrawable = drawable[currentSceneObject - scene->obj_world_root];
+				a3textureActivate(texture_dm[j], a3tex_unit00);
+				a3textureActivate(texture_dm[j], a3tex_unit01);
+				a3real4x4Product(modelViewMat.m, activeCameraObject->modelMatInv.m, currentSceneObject->modelMat.m);
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
+				a3scene_quickInvertTranspose_internal(modelViewMat.m);
+				modelViewMat.v3 = a3vec4_zero;
+				a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
+				a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, rgba4[i].v);
+				a3shaderUniformSendInt(a3unif_single, currentDemoProgram->uIndex, 1, &j);
+                if (invert_model[j])
+                {
+                    glCullFace(GL_FRONT);
+                    a3vertexDrawableActivateAndRender(currentDrawable);
+                    glCullFace(GL_BACK);
+                }
+                else
+                {
+                    a3vertexDrawableActivateAndRender(currentDrawable);
+                }
+			}
+			break;
+		case rendering_renderRT:
+			for (currentSceneObject = scene->obj_room_enclosure, endSceneObject = scene->obj_room_enclosure,
 				j = (a3ui32)(currentSceneObject - scene->object_scene);
 				currentSceneObject <= endSceneObject;
 				++j, ++currentSceneObject)

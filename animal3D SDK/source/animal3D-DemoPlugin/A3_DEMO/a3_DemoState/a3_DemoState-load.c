@@ -549,7 +549,8 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 			a3_DemoStateShader
 				drawTexture_fs[1],
 				drawLambert_fs[1],
-				drawPhong_fs[1];
+				drawPhong_fs[1],
+                drawRT_fs[1];
 		};
 	} shaderList = {
 		{
@@ -592,6 +593,7 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 																					A3_DEMO_FS"00-common/utilCommon_fs4x.glsl",} } },
 			{ { { 0 },	"shdr-fs:draw-Phong",				a3shader_fragment,	2,{ A3_DEMO_FS"00-common/drawPhong_fs4x.glsl",
 																					A3_DEMO_FS"00-common/utilCommon_fs4x.glsl",} } },
+            { { { 0 },	"shdr-fs:draw-RT",		    		a3shader_fragment,	1,{ A3_DEMO_FS"00-common/drawRT_fs4x.glsl",} } },
 		}
 	};
 	a3_DemoStateShader *const shaderListPtr = (a3_DemoStateShader *)(&shaderList), *shaderPtr;
@@ -681,6 +683,11 @@ void a3demo_loadShaders(a3_DemoState *demoState)
 	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-inst");
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTangentBasis_transform_instanced_vs->shader);
 	a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawPhong_fs->shader);
+    // Phong
+    currentDemoProg = demoState->prog_drawRT;
+    a3shaderProgramCreate(currentDemoProg->program, "prog:draw-RT");
+    a3shaderProgramAttachShader(currentDemoProg->program, shaderList.passTangentBasis_transform_vs->shader);
+    a3shaderProgramAttachShader(currentDemoProg->program, shaderList.drawRT_fs->shader);
 	// Phong for 5-target morphing
 	currentDemoProg = demoState->prog_drawPhong_morph5;
 	a3shaderProgramCreate(currentDemoProg->program, "prog:draw-Phong-morph5");

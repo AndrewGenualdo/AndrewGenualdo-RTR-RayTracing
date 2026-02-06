@@ -370,5 +370,8 @@
     <None Include="..\..\..\source\animal3D-DemoPlugin\A3_DEMO\_animation\_inl\a3_SpatialPose.inl">
       <Filter>Header Files\A3_DEMO\_animation\_inl</Filter>
     </None>
+    <None Include="..\..\..\resource\glsl\4x\fs\00-common\drawRT_fs4x.glsl">
+      <Filter>Resource Files\A3_DEMO\glsl\4x\fs\00-common</Filter>
+    </None>
   </ItemGroup>
 </Project>
