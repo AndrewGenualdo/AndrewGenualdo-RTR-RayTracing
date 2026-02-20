@@ -369,6 +369,9 @@ void a3rendering_render(a3_DemoState const* demoState, a3_Scene_Rendering const*
 	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uPB_inv, 1, projectionBiasMat_inv.mm);
 	a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uAtlas, 1, a3mat4_identity.mm);
 	a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, hueCount, rgba4->v);
+	a3real resolution[2] = { (a3real)demoState->frameWidth, (a3real)demoState->frameHeight };
+	a3shaderUniformSendFloat(a3unif_vec2, currentDemoProgram->uSize, 1, resolution);
+
     if (demoState->updateAnimation)
         a3shaderUniformSendDouble(a3unif_single, currentDemoProgram->uTime, 1, &demoState->timer_display->totalTime);
     
