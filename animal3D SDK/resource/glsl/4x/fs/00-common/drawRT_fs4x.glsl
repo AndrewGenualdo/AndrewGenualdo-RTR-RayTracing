@@ -58,9 +58,18 @@ uniform ubTransformStack {
 	sModelStack model_stack[MAX_MODELS];
 };
 
+struct RayHit
+{
+	float t;
+	vec3 pos;
+	vec3 normal;
+	vec3 color;
+};
+
 
 #define SPHERE 0
 #define CUBE 1
+#define LIGHT 2
 
 #define IDX_MODEL_CUBE0 0
 #define IDX_MODEL_CUBE1 1
@@ -69,12 +78,16 @@ uniform ubTransformStack {
 #define IDX_MODEL_LIGHT0 4
 #define IDX_MODEL_WALLS 5
 
+const float radius_sphere0 = 2.0f;
 const float radius_sphere1 = 1.0f;
-const float radius_sphere2 = 2.0f;
 const float halfsize_cube0 = 0.5f;
 const float halfsize_cube1 = 0.5f;
-const float radius_sphere0 = 2.0f;
-const float halfsize_walls = 2.28571428571f;
+const float radius_light0 = 2.0f;
+const float halfsize_walls = 3.0f;
+
+#define BOUNCES 50
+
+const vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
 
 uniform mat4 uP;
 uniform mat4 uPB;
@@ -85,19 +98,26 @@ uniform sampler2D uTex_dm;
 
 layout (location = 0) out vec4 rtFragColor;
 
-float raySphereHit(vec3 p0, vec3 p, vec3 Q, float r) {
+RayHit raySphereHit(vec3 p0, vec3 p, vec3 Q, float r) {
+	RayHit hit;
+	hit.t = -1;
 	vec3 s = Q - p0;
 
 	float b = dot(p, s);
 	float c = dot(s,s) - r * r;
 	float d = b * b - c;
-	if(d < 0.0f) return -1.0f;
-	return b - sqrt(d);
+	
+	if(d < 0.0f) return hit;
+	hit.t = b - sqrt(d);
+	hit.pos = p0 + hit.t * p;
+	hit.normal = normalize(hit.pos - Q);
+	return hit;
 }
 
 //based on https://en.wikipedia.org/wiki/Slab_method
-float rayCubeHit(vec3 p0, vec3 p, int modelIndex, float halfSize) {
-
+RayHit rayCubeHit(vec3 p0, vec3 p, int modelIndex, float halfSize) {
+	RayHit hit;
+	hit.t = -1;
 	mat4 invModel = model_stack[modelIndex].modelViewMatInverse;
     vec3 ro = (invModel * vec4(p0, 1.0)).xyz; //ray origin
     vec3 rd = (invModel * vec4(p, 0.0)).xyz; //ray direction
@@ -111,8 +131,23 @@ float rayCubeHit(vec3 p0, vec3 p, int modelIndex, float halfSize) {
     float tNear = max(max(t1.x, t1.y), t1.z); //enter
     float tFar  = min(min(t2.x, t2.y), t2.z); //exit
 
-    if(tNear > tFar || tFar < 0.0) return -1.0;
-    return tNear >= 0.0 ? tNear : tFar;
+    if(tNear > tFar || tFar < 0.0) return hit;
+	hit.t = tNear >= 0.0 ? tNear : tFar;
+	hit.pos = p0 + hit.t * p;
+
+
+	vec3 hitOS = ro + hit.t * rd;
+	//find which axis is closest to halfSize
+	vec3 absHit = abs(hitOS) / halfSize;
+	vec3 nrmOS = vec3(0.0);
+
+	if(absHit.x >= absHit.y && absHit.x >= absHit.z) nrmOS = vec3(sign(hitOS.x), 0.0, 0.0); //left/right planes
+	else if(absHit.y >= absHit.x && absHit.y >= absHit.z) nrmOS = vec3(0.0, sign(hitOS.y), 0.0); //top/bottom planes
+	else nrmOS = vec3(0.0, 0.0, sign(hitOS.z)); //front/back planes
+
+	//transform back to view space using inverse transpose
+	hit.normal = normalize((model_stack[modelIndex].modelViewMatInverseTranspose * vec4(nrmOS, 0.0)).xyz);
+    return hit;
 }
 
 
@@ -154,55 +189,95 @@ vec3 randomOnHemisphere(vec3 normal) {
 	return normalize(onUnitSphere);
 }
 
+	const int types[6] = int[](CUBE, CUBE, SPHERE, SPHERE, SPHERE, CUBE);
+	const int models[6] = int[](IDX_MODEL_CUBE0, IDX_MODEL_CUBE1, IDX_MODEL_SPHERE0, IDX_MODEL_SPHERE1, IDX_MODEL_LIGHT0, IDX_MODEL_WALLS);
+	const float sizes[6] = float[](halfsize_cube0, halfsize_cube1,radius_sphere0, radius_sphere1, radius_light0, halfsize_walls);
+	const vec3 colors[6] = vec3[](vec3(0.2f, 0.0f, 0.0f), vec3(0.0f, 0.2f, 0.0f), vec3(0.0f, 0.0f, 0.2f), vec3(0.2f, 0.0f, 0.2f), lightColor, vec3(0.0f, 0.0f, 0.0f));
+
 void main()
 {
+
+	RayHit hits[BOUNCES];
+	//int cameFrom[BOUNCES]; //this is for if when it hits something, it sends out multiple rays, instead of just always pointing to the previous one, it needs to point to where it came from
+
 	vec3 p0 = vec3(0.0f);
 	vec3 P_target = vTangentBasis_view[3].xyz;
 	vec3 p = normalize(P_target - p0);
 
 	//infinity :D
-	float closestDist = 1.0 / 0.0;
+	
+
+	
+	
 	int closestIndex = -1;
+	bool skip = false;
+	for(int b = 0; b < BOUNCES; b++) {
+		int lastHit = closestIndex;
+		
+		float closestDist = 1.0 / 0.0;
+		RayHit finHit;
+		finHit.t = -1;
+		
 
-	int types[6] = int[](CUBE, CUBE, SPHERE, SPHERE, SPHERE, CUBE);
-	int models[6] = int[](IDX_MODEL_CUBE0, IDX_MODEL_CUBE1, IDX_MODEL_SPHERE0, IDX_MODEL_SPHERE1, IDX_MODEL_LIGHT0, IDX_MODEL_WALLS);
-	float sizes[6] = float[](halfsize_cube0, halfsize_cube1,radius_sphere0, radius_sphere1, radius_sphere2, halfsize_walls);
+		if(!skip) {
+			closestIndex = -1;
+			for(int i = 0; i <= 5; i++) {
+				RayHit hit;
+				if(types[i] == CUBE) hit = rayCubeHit(p0, p, models[i], sizes[i]);
+				else if(types[i] == SPHERE) hit = raySphereHit(p0, p, model_stack[models[i]].modelViewMat[3].xyz, sizes[i]);
+				else if(types[i] == LIGHT) hit == rayCubeHit(p0, p, models[i], sizes[i]);
+				hit.color = colors[i];
 
-	for(int i = 0; i <= 5; i++) {
-		float d = 0.0f;
-		if(types[i] == CUBE) d = rayCubeHit(p0, p, models[i], sizes[i]);
-		else if(types[i] == SPHERE) d = raySphereHit(p0, p, model_stack[models[i]].modelViewMat[3].xyz, sizes[i]);
-
-		if(d >= 0.0f && d < closestDist) {
-			closestIndex = i;
-			closestDist = d;
+				if(hit.t >= 0.0f && hit.t < closestDist) {
+					closestIndex = i;
+					closestDist = hit.t;
+					finHit = hit;
+				}
+			}
 		}
+		
+		
+		hits[b] = finHit;
+		//cameFrom[b] = lastHit;
+
+		p0 = finHit.pos;
+		//p = reflect(p, randomOnHemisphere(finHit.normal));
+		p = reflect(p, finHit.normal);
+		if(!skip && types[closestIndex] == LIGHT) skip = true;
 	}
+	
 
 
 	if(closestIndex == -1) {
 		vec4 sample_dm = texture(uTex_dm, vTexcoord_atlas.xy);
-		//rtFragColor = sample_dm * uColor;
+		rtFragColor = sample_dm * uColor;
 		rtFragColor = vec4(0.0f);
 		rtFragColor.a = sample_dm.a;
 		return;
 	}
 
-	vec3 hit_pos = p0 + closestDist * p;
-	vec4 hit_pos_view = vec4(hit_pos, 1.0f);
+	vec4 hit_pos_view = vec4(hits[0].pos, 1.0f);
 	vec4 hit_pos_bias = viewer_stack[0].projectionBiasMat * hit_pos_view;
 
 	gl_FragDepth = hit_pos_bias.z / hit_pos_bias.w;
-	vec3 hit_normal;
-	if(types[closestIndex] == SPHERE) hit_normal = normalize(hit_pos - model_stack[models[closestIndex]].modelViewMat[3].xyz);
-	else if(types[closestIndex] == CUBE) hit_normal = normalize(hit_pos - model_stack[models[closestIndex]].modelViewMat[3].xyz);
+	
+	vec3 finColor = vec3(0.0f);
+
+	for(int i = 0; i < BOUNCES; i++) {
+		if(hits[i].t > 0.0f) finColor += hits[i].color;
+	}
+
+
+	rtFragColor = vec4(finColor, 1.0f);
 
 	//debug to see normals
-	rtFragColor.rgb = hit_normal * 0.5f + 0.5f;
-	rtFragColor.a = 1.0f;
+	//rtFragColor = vec4(hits[0].normal * 0.5f + 0.5f, 1.0f);
 
 	//debug to see random
-	//rtFragColor.rgb = vec3(random(0.0f, 1.0f));
+	//rtFragColor = vec4(vec3(random(0.0f, 1.0f)), 1.0f);
 
-	rtFragColor.rgb = randomOnHemisphere(hit_normal) * 0.5f + 0.5f;
+	//debug to see random on hemisphere
+	//rtFragColor.rgb = randomOnHemisphere(hits[0].normal) * 0.5f + 0.5f;
+
+
 }
