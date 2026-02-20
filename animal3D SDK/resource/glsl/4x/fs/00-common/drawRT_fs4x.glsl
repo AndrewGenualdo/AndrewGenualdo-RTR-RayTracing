@@ -58,6 +58,7 @@ uniform ubTransformStack {
 	sModelStack model_stack[MAX_MODELS];
 };
 
+
 #define SPHERE 0
 #define CUBE 1
 
@@ -65,17 +66,18 @@ uniform ubTransformStack {
 #define IDX_MODEL_CUBE1 1
 #define IDX_MODEL_SPHERE0 2
 #define IDX_MODEL_SPHERE1 3
-#define IDX_MODEL_SPHERE2 4
+#define IDX_MODEL_LIGHT0 4
+#define IDX_MODEL_WALLS 5
 
+const float radius_sphere1 = 1.0f;
+const float radius_sphere2 = 2.0f;
 const float halfsize_cube0 = 0.5f;
 const float halfsize_cube1 = 0.5f;
 const float radius_sphere0 = 2.0f;
-const float radius_sphere1 = 1.0f;
-const float radius_sphere2 = 2.0f;
+const float halfsize_walls = 2.28571428571f;
 
 uniform mat4 uP;
 uniform mat4 uPB;
-uniform vec2 uSize;
 
 uniform vec4 uColor;
 
@@ -93,7 +95,7 @@ float raySphereHit(vec3 p0, vec3 p, vec3 Q, float r) {
 	return b - sqrt(d);
 }
 
-// based on https://en.wikipedia.org/wiki/Slab_method
+//based on https://en.wikipedia.org/wiki/Slab_method
 float rayCubeHit(vec3 p0, vec3 p, int modelIndex, float halfSize) {
 
 	mat4 invModel = model_stack[modelIndex].modelViewMatInverse;
@@ -113,25 +115,60 @@ float rayCubeHit(vec3 p0, vec3 p, int modelIndex, float halfSize) {
     return tNear >= 0.0 ? tNear : tFar;
 }
 
+
+
+float random(float randomSeed, float min, float max) {
+	
+	uint x = uint(randomSeed);
+	x ^= x << 13;
+	x ^= x >> 17;
+	x ^= x << 5;
+
+	float res = float(x) / 2295.0f;
+	res = mod(res, 1.0f);
+	res *= (max - min);
+	res += min;
+	return res;
+}
+
+float random(float min, float max) {
+	return random(dot(gl_FragCoord.x * gl_FragCoord.y, length(vTangentBasis_view[3].xyz)), min, max);
+}
+
+vec3 randomUnitVector() {
+	float r1 = random(dot(gl_FragCoord.x * gl_FragCoord.y, length(vTangentBasis_view[3].xyz)), -1.0f, 1.0f);
+	float r2 = random(r1 * 1000.0f, -1.0f, 1.0f);
+	float r3 = random(r2 * 100000.0f, -1.0f, 1.0f);
+
+	vec3 p = vec3(r1, r2, r3);
+	return normalize(p);
+}
+
+//call this 16 times per bounce?
+vec3 randomOnHemisphere(vec3 normal) {
+
+	vec3 onUnitSphere = randomUnitVector();
+	if(dot(onUnitSphere, normal) <= 0.0f) onUnitSphere = -onUnitSphere;
+	onUnitSphere += normal;
+
+	return normalize(onUnitSphere);
+}
+
 void main()
 {
 	vec3 p0 = vec3(0.0f);
-
-	vec2 ndc = (gl_FragCoord.xy / uSize) * 2.0 - 1.0;
-	vec4 rayFar = viewer_stack[0].projectionMatInverse * vec4(ndc, 1.0, 1.0);
-	rayFar /= rayFar.w;
-	vec3 p = normalize(rayFar.xyz);
+	vec3 P_target = vTangentBasis_view[3].xyz;
+	vec3 p = normalize(P_target - p0);
 
 	//infinity :D
 	float closestDist = 1.0 / 0.0;
 	int closestIndex = -1;
 
-	int types[5] = int[](CUBE, CUBE, SPHERE, SPHERE, SPHERE);
-	int models[5] = int[](IDX_MODEL_CUBE0, IDX_MODEL_CUBE1, IDX_MODEL_SPHERE0, IDX_MODEL_SPHERE1, IDX_MODEL_SPHERE2);
-	float sizes[5] = float[](halfsize_cube0, halfsize_cube1,radius_sphere0, radius_sphere1, radius_sphere2);
+	int types[6] = int[](CUBE, CUBE, SPHERE, SPHERE, SPHERE, CUBE);
+	int models[6] = int[](IDX_MODEL_CUBE0, IDX_MODEL_CUBE1, IDX_MODEL_SPHERE0, IDX_MODEL_SPHERE1, IDX_MODEL_LIGHT0, IDX_MODEL_WALLS);
+	float sizes[6] = float[](halfsize_cube0, halfsize_cube1,radius_sphere0, radius_sphere1, radius_sphere2, halfsize_walls);
 
-	for(int i = 0; i < 5; i++) {
-		
+	for(int i = 0; i <= 5; i++) {
 		float d = 0.0f;
 		if(types[i] == CUBE) d = rayCubeHit(p0, p, models[i], sizes[i]);
 		else if(types[i] == SPHERE) d = raySphereHit(p0, p, model_stack[models[i]].modelViewMat[3].xyz, sizes[i]);
@@ -145,19 +182,27 @@ void main()
 
 	if(closestIndex == -1) {
 		vec4 sample_dm = texture(uTex_dm, vTexcoord_atlas.xy);
-		rtFragColor = sample_dm * uColor;
+		//rtFragColor = sample_dm * uColor;
+		rtFragColor = vec4(0.0f);
 		rtFragColor.a = sample_dm.a;
 		return;
 	}
 
-	vec3 pos_hit = p0 + closestDist * p;
-	vec4 pos_view = vec4(pos_hit, 1.0f);
-	vec4 pos_bias = viewer_stack[0].projectionBiasMat * pos_view;
+	vec3 hit_pos = p0 + closestDist * p;
+	vec4 hit_pos_view = vec4(hit_pos, 1.0f);
+	vec4 hit_pos_bias = viewer_stack[0].projectionBiasMat * hit_pos_view;
 
-	gl_FragDepth = pos_bias.z / pos_bias.w;
+	gl_FragDepth = hit_pos_bias.z / hit_pos_bias.w;
+	vec3 hit_normal;
+	if(types[closestIndex] == SPHERE) hit_normal = normalize(hit_pos - model_stack[models[closestIndex]].modelViewMat[3].xyz);
+	else if(types[closestIndex] == CUBE) hit_normal = normalize(hit_pos - model_stack[models[closestIndex]].modelViewMat[3].xyz);
 
-	vec3 nrm_hit = normalize(pos_hit - model_stack[models[closestIndex]].modelViewMat[3].xyz);
-
-	rtFragColor.rgb = nrm_hit * 0.5f + 0.5f;
+	//debug to see normals
+	rtFragColor.rgb = hit_normal * 0.5f + 0.5f;
 	rtFragColor.a = 1.0f;
+
+	//debug to see random
+	//rtFragColor.rgb = vec3(random(0.0f, 1.0f));
+
+	rtFragColor.rgb = randomOnHemisphere(hit_normal) * 0.5f + 0.5f;
 }
