@@ -62,8 +62,10 @@ struct RayHit
 {
 	float t;
 	vec3 pos;
+	vec3 p;
 	vec3 normal;
 	vec3 color;
+	int index;
 };
 
 
@@ -85,7 +87,8 @@ const float halfsize_cube1 = 0.5f;
 const float radius_light0 = 2.0f;
 const float halfsize_walls = 3.0f;
 
-#define BOUNCES 50
+#define BOUNCES 20
+#define RAYS_PER_BOUNCE 1
 
 const vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
 
@@ -170,8 +173,8 @@ float random(float min, float max) {
 	return random(dot(gl_FragCoord.x * gl_FragCoord.y, length(vTangentBasis_view[3].xyz)), min, max);
 }
 
-vec3 randomUnitVector() {
-	float r1 = random(dot(gl_FragCoord.x * gl_FragCoord.y, length(vTangentBasis_view[3].xyz)), -1.0f, 1.0f);
+vec3 randomUnitVector(vec3 rand) {
+	float r1 = random(dot(gl_FragCoord.x * gl_FragCoord.y, length(rand * vTangentBasis_view[3].xyz)), -1.0f, 1.0f);
 	float r2 = random(r1 * 1000.0f, -1.0f, 1.0f);
 	float r3 = random(r2 * 100000.0f, -1.0f, 1.0f);
 
@@ -182,79 +185,135 @@ vec3 randomUnitVector() {
 //call this 16 times per bounce?
 vec3 randomOnHemisphere(vec3 normal) {
 
-	vec3 onUnitSphere = randomUnitVector();
+	vec3 onUnitSphere = randomUnitVector(normal);
 	if(dot(onUnitSphere, normal) <= 0.0f) onUnitSphere = -onUnitSphere;
 	onUnitSphere += normal;
 
 	return normalize(onUnitSphere);
 }
 
-	const int types[6] = int[](CUBE, CUBE, SPHERE, SPHERE, SPHERE, CUBE);
-	const int models[6] = int[](IDX_MODEL_CUBE0, IDX_MODEL_CUBE1, IDX_MODEL_SPHERE0, IDX_MODEL_SPHERE1, IDX_MODEL_LIGHT0, IDX_MODEL_WALLS);
-	const float sizes[6] = float[](halfsize_cube0, halfsize_cube1,radius_sphere0, radius_sphere1, radius_light0, halfsize_walls);
-	const vec3 colors[6] = vec3[](vec3(0.2f, 0.0f, 0.0f), vec3(0.0f, 0.2f, 0.0f), vec3(0.0f, 0.0f, 0.2f), vec3(0.2f, 0.0f, 0.2f), lightColor, vec3(0.0f, 0.0f, 0.0f));
+const int types[6] = int[](CUBE, CUBE, SPHERE, SPHERE, SPHERE, CUBE);
+const int models[6] = int[](IDX_MODEL_CUBE0, IDX_MODEL_CUBE1, IDX_MODEL_SPHERE0, IDX_MODEL_SPHERE1, IDX_MODEL_LIGHT0, IDX_MODEL_WALLS);
+const float sizes[6] = float[](halfsize_cube0, halfsize_cube1,radius_sphere0, radius_sphere1, radius_light0, halfsize_walls);
+const float clrStr = 0.1f;
+const vec3 colors[6] = vec3[](vec3(clrStr, 0.0f, 0.0f), vec3(0.0f, clrStr, 0.0f), vec3(0.0f, 0.0f, clrStr), vec3(clrStr, 0.0f, clrStr), lightColor, vec3(0.0f, 0.0f, 0.0f));
 
-void main()
-{
 
-	RayHit hits[BOUNCES];
+RayHit raycast(vec3 p0, vec3 p) {
+	RayHit finHit;
+	//infinity :D
+	finHit.t = 1.0 / 0.0;
+	
+	for(int i = 0; i <= 5; i++) {
+		RayHit hit;
+		hit.index = i;
+		if(types[i] == CUBE) hit = rayCubeHit(p0, p, models[i], sizes[i]);
+		else if(types[i] == SPHERE) hit = raySphereHit(p0, p, model_stack[models[i]].modelViewMat[3].xyz, sizes[i]);
+		else if(types[i] == LIGHT) hit == rayCubeHit(p0, p, models[i], sizes[i]);
+		hit.color = colors[i];
+
+		if(hit.t >= 0.0f && hit.t < finHit.t) {
+			finHit = hit;
+		}
+	}
+	finHit.p = p;
+	return finHit;
+}
+
+int calcSize(int bounces) {
+	int amt = 0;
+	for(int i = 0;i < bounces; i++) amt += int(pow(RAYS_PER_BOUNCE, i));
+	return amt;
+}
+
+int getFrom(int index) {
+	return index == 0 ? -1 : int(floor((index - 1.0f) / float(RAYS_PER_BOUNCE)));
+}
+
+/*
+
+ [0][1][2][3][4][5][6][7][8][9][10][11][12][13][14] RAYHIT INDEXES
+[-1][0][0][1][1][2][2][3][3][4] [4] [5] [5] [6] [6] PREVIOUS RAY HIT INDEXES
+ [1][2][2][3][3][3][3][4][4][4] [4] [4] [4] [4] [4] BOUNCES
+
+*/
+
+void main() {
+	//const int arrSize = 273;//calcSize(BOUNCES); //cant use this cuz non-constant array size
+	const int arrSize = 300;
+	RayHit hits[arrSize];
+	int bounces[arrSize];
+	int memSlot = 0;
+	int counter = 0;
+
 	//int cameFrom[BOUNCES]; //this is for if when it hits something, it sends out multiple rays, instead of just always pointing to the previous one, it needs to point to where it came from
 
 	vec3 p0 = vec3(0.0f);
 	vec3 P_target = vTangentBasis_view[3].xyz;
 	vec3 p = normalize(P_target - p0);
-
-	//infinity :D
 	
+	hits[memSlot] = raycast(p0, p);
+	bounces[memSlot] = 1;
+	memSlot++;
 
-	
-	
-	int closestIndex = -1;
-	bool skip = false;
-	for(int b = 0; b < BOUNCES; b++) {
-		int lastHit = closestIndex;
-		
-		float closestDist = 1.0 / 0.0;
-		RayHit finHit;
-		finHit.t = -1;
-		
+	while(counter < memSlot) {
 
-		if(!skip) {
-			closestIndex = -1;
-			for(int i = 0; i <= 5; i++) {
-				RayHit hit;
-				if(types[i] == CUBE) hit = rayCubeHit(p0, p, models[i], sizes[i]);
-				else if(types[i] == SPHERE) hit = raySphereHit(p0, p, model_stack[models[i]].modelViewMat[3].xyz, sizes[i]);
-				else if(types[i] == LIGHT) hit == rayCubeHit(p0, p, models[i], sizes[i]);
-				hit.color = colors[i];
+		if(bounces[counter] < BOUNCES) {
+			
 
-				if(hit.t >= 0.0f && hit.t < closestDist) {
-					closestIndex = i;
-					closestDist = hit.t;
-					finHit = hit;
-				}
+			//initial raycast in the "correct" position
+			if(getFrom(counter) == -1) { //first ray
+				p0 = vec3(0.0f);
+				p = normalize(P_target - p0);
+			} else {
+				p0 = hits[getFrom(counter)].pos;
+				p = reflect(hits[getFrom(counter)].p, hits[counter].normal);
 			}
-		}
-		
-		
-		hits[b] = finHit;
-		//cameFrom[b] = lastHit;
+			hits[memSlot] = raycast(p0,p);
+			bounces[memSlot] = bounces[getFrom(counter)] + 1;
+			memSlot++;
 
-		p0 = finHit.pos;
-		//p = reflect(p, randomOnHemisphere(finHit.normal));
-		p = reflect(p, finHit.normal);
-		if(!skip && types[closestIndex] == LIGHT) skip = true;
+			for(int i = 1; i < RAYS_PER_BOUNCE; i++) {
+				p = reflect(hits[getFrom(counter)].p, randomOnHemisphere(hits[counter].normal));
+				hits[memSlot] = raycast(p0, p);
+				bounces[memSlot] = bounces[getFrom(counter)] + 1;
+				memSlot++;
+			}
+		} else p = reflect(p, hits[counter].normal);
+		/*if(counter == 0) {
+
+			p0 = hits[0].pos; //any ray after the initial one, has to be FROM the initial hit point, since max of 2 bounces
+
+			//initial raycast in the "correct" position
+			p = reflect(p, hits[counter].normal);
+			hits[memSlot] = raycast(p0,p);
+			memSlot++;
+
+			//randomly bouncing rays around hemisphere
+			for(int i = 1; i < RAYS_PER_BOUNCE; i++) {
+				p = reflect(p, randomOnHemisphere(hits[counter].normal));
+				hits[memSlot] = raycast(p0, p);
+				hitFrom[memSlot] = 0;
+				bounces[memSlot] = bounces[hitFrom[memSlot]] + 1;
+				memSlot++;
+			}
+			
+			//p = reflect(p, hits[b].normal);
+		}
+		else p = reflect(p, hits[counter].normal);*/
+
+		counter++;
 	}
 	
 
 
-	if(closestIndex == -1) {
+	/*if(closestIndex == -1) {
 		vec4 sample_dm = texture(uTex_dm, vTexcoord_atlas.xy);
 		rtFragColor = sample_dm * uColor;
 		rtFragColor = vec4(0.0f);
 		rtFragColor.a = sample_dm.a;
 		return;
-	}
+	}*/
 
 	vec4 hit_pos_view = vec4(hits[0].pos, 1.0f);
 	vec4 hit_pos_bias = viewer_stack[0].projectionBiasMat * hit_pos_view;
@@ -263,8 +322,8 @@ void main()
 	
 	vec3 finColor = vec3(0.0f);
 
-	for(int i = 0; i < BOUNCES; i++) {
-		if(hits[i].t > 0.0f) finColor += hits[i].color;
+	for(int i = 0; i < counter; i++) {
+		if(hits[i].t > 0.0f || hits[i].t >= 1.0 / 0.0) finColor += hits[i].color;
 	}
 
 
