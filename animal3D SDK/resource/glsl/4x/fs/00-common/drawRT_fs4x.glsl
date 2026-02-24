@@ -80,17 +80,19 @@ struct RayHit
 #define IDX_MODEL_LIGHT0 4
 #define IDX_MODEL_WALLS 5
 
+#define LIGHT_INDEX IDX_MODEL_LIGHT0
+
 const float radius_sphere0 = 2.0f;
 const float radius_sphere1 = 1.0f;
 const float halfsize_cube0 = 0.5f;
 const float halfsize_cube1 = 0.5f;
 const float radius_light0 = 2.0f;
-const float halfsize_walls = 3.0f;
+const float halfsize_walls = 5.0f;
 
-#define BOUNCES 20
+#define BOUNCES 2
 #define RAYS_PER_BOUNCE 1
 
-const vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
+const vec3 lightColor = vec3(1.0f, 1.0f, 0.0f) * 0.4f;
 
 uniform mat4 uP;
 uniform mat4 uPB;
@@ -183,20 +185,21 @@ vec3 randomUnitVector(vec3 rand) {
 }
 
 //call this 16 times per bounce?
-vec3 randomOnHemisphere(vec3 normal) {
+vec3 randomOnHemisphere(vec3 normal, float randOffset) {
 
-	vec3 onUnitSphere = randomUnitVector(normal);
+	vec3 onUnitSphere = randomUnitVector(normal * randOffset);
 	if(dot(onUnitSphere, normal) <= 0.0f) onUnitSphere = -onUnitSphere;
 	onUnitSphere += normal;
 
 	return normalize(onUnitSphere);
 }
 
+const int OBJECT_COUNT = 6;
 const int types[6] = int[](CUBE, CUBE, SPHERE, SPHERE, SPHERE, CUBE);
 const int models[6] = int[](IDX_MODEL_CUBE0, IDX_MODEL_CUBE1, IDX_MODEL_SPHERE0, IDX_MODEL_SPHERE1, IDX_MODEL_LIGHT0, IDX_MODEL_WALLS);
 const float sizes[6] = float[](halfsize_cube0, halfsize_cube1,radius_sphere0, radius_sphere1, radius_light0, halfsize_walls);
-const float clrStr = 0.1f;
-const vec3 colors[6] = vec3[](vec3(clrStr, 0.0f, 0.0f), vec3(0.0f, clrStr, 0.0f), vec3(0.0f, 0.0f, clrStr), vec3(clrStr, 0.0f, clrStr), lightColor, vec3(0.0f, 0.0f, 0.0f));
+const float clrStr = 0.1f / (BOUNCES * 0.5f) / (RAYS_PER_BOUNCE);
+const vec3 colors[6] = vec3[](vec3(clrStr, 0.0f, 0.0f), vec3(0.0f, clrStr, 0.0f), vec3(0.0f, 0.0f, clrStr), vec3(clrStr, 0.0f, clrStr), lightColor, vec3(clrStr * 0.5f, clrStr * 0.5f, clrStr * 0.5f));
 
 
 RayHit raycast(vec3 p0, vec3 p) {
@@ -204,7 +207,7 @@ RayHit raycast(vec3 p0, vec3 p) {
 	//infinity :D
 	finHit.t = 1.0 / 0.0;
 	
-	for(int i = 0; i <= 5; i++) {
+	for(int i = 0; i < OBJECT_COUNT; i++) {
 		RayHit hit;
 		hit.index = i;
 		if(types[i] == CUBE) hit = rayCubeHit(p0, p, models[i], sizes[i]);
@@ -265,6 +268,11 @@ void main() {
 			if(getFrom(counter) == -1) { //first ray
 				p0 = vec3(0.0f);
 				p = normalize(P_target - p0);
+			} else if(/*getFrom(counter) == 0*/bounces[counter] == BOUNCES - 1) {
+				vec3 bouncingFrom = hits[counter].pos;
+				vec3 bouncingTo = model_stack[models[LIGHT_INDEX]].modelViewMat[3].xyz;
+				p0 = bouncingFrom;
+				p = normalize(bouncingTo - bouncingFrom);
 			} else {
 				p0 = hits[getFrom(counter)].pos;
 				p = reflect(hits[getFrom(counter)].p, hits[counter].normal);
@@ -274,12 +282,19 @@ void main() {
 			memSlot++;
 
 			for(int i = 1; i < RAYS_PER_BOUNCE; i++) {
-				p = reflect(hits[getFrom(counter)].p, randomOnHemisphere(hits[counter].normal));
+				p = reflect(hits[getFrom(counter)].p, randomOnHemisphere(hits[counter].normal, random(dot(vec3(gl_FragCoord.x, gl_FragCoord.y, sin(i * i) + i), vTangentBasis_view[3].xyz * i), 0.0f, float(i))));
+				//p = reflect(hits[getFrom(counter)].p, hits[counter].normal);
 				hits[memSlot] = raycast(p0, p);
 				bounces[memSlot] = bounces[getFrom(counter)] + 1;
 				memSlot++;
 			}
-		} else p = reflect(p, hits[counter].normal);
+		} else {
+			//p = reflect(hits[getFrom(counter)].p, hits[counter].normal);
+			//p = reflect(hits[getFrom(counter)].p, randomOnHemisphere(hits[counter].normal, random(dot(vec3(gl_FragCoord.x, gl_FragCoord.y, 0), vTangentBasis_view[3].xyz), 0.0f, 1.0f)));;
+			//vec3 bouncingFrom = hits[getFrom(counter)].p;
+			//vec3 bouncingTo = model_stack[models[LIGHT_INDEX]].modelViewMat[3].xyz;
+			//p = normalize(bouncingTo - bouncingFrom);
+		}
 		/*if(counter == 0) {
 
 			p0 = hits[0].pos; //any ray after the initial one, has to be FROM the initial hit point, since max of 2 bounces
@@ -323,7 +338,7 @@ void main() {
 	vec3 finColor = vec3(0.0f);
 
 	for(int i = 0; i < counter; i++) {
-		if(hits[i].t > 0.0f || hits[i].t >= 1.0 / 0.0) finColor += hits[i].color;
+		if(hits[i].t > 0.0f && hits[i].t < 1.0 / 0.0) finColor += hits[i].color;
 	}
 
 
@@ -336,7 +351,7 @@ void main() {
 	//rtFragColor = vec4(vec3(random(0.0f, 1.0f)), 1.0f);
 
 	//debug to see random on hemisphere
-	//rtFragColor.rgb = randomOnHemisphere(hits[0].normal) * 0.5f + 0.5f;
+	//rtFragColor.rgb = randomOnHemisphere(hits[0].normal, random(dot(gl_FragCoord.x * gl_FragCoord.y, length(vTangentBasis_view[3].xyz)), 0.01f, 100.0f)) * 0.5f + 0.5f;
 
 
 }
