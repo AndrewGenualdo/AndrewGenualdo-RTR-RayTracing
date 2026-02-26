@@ -202,7 +202,7 @@ const int OBJECT_COUNT = 6;
 const int types[6] = int[](CUBE, CUBE, SPHERE, SPHERE, SPHERE, CUBE);
 const int models[6] = int[](IDX_MODEL_CUBE0, IDX_MODEL_CUBE1, IDX_MODEL_SPHERE0, IDX_MODEL_SPHERE1, IDX_MODEL_LIGHT0, IDX_MODEL_WALLS);
 const float sizes[6] = float[](halfsize_cube0, halfsize_cube1,radius_sphere0, radius_sphere1, radius_light0, halfsize_walls);
-const float clrStr = 0.0f / (BOUNCES * 0.5f) / (RAYS_PER_BOUNCE);
+const float clrStr = 1.0f / (BOUNCES * 0.5f) / (RAYS_PER_BOUNCE);
 const vec3 colors[6] = vec3[](vec3(clrStr, 0.0f, 0.0f), vec3(0.0f, clrStr, 0.0f), vec3(0.0f, 0.0f, clrStr), vec3(clrStr, 0.0f, clrStr), lightColor, vec3(0, 0, 0));
 
 
@@ -234,7 +234,7 @@ int calcSize(int bounces) {
 }
 
 int getFrom(int index) {
-	return index == 0 ? -1 : int(floor((index - 1.0f) / float(RAYS_PER_BOUNCE)));
+	return index == 0 ? -1 : int(floor((index - 1.0f) / float(OBJECT_COUNT - 1)));
 }
 
 /*
