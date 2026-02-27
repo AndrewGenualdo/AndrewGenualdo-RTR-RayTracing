@@ -89,12 +89,12 @@ const float halfsize_cube0 = 0.5f;
 const float halfsize_cube1 = 0.5f;
 const float radius_light0 = 2.0f;
 //const float halfsize_walls = 5.0f;
-#define halfsize_walls 0.505f
+#define halfsize_walls 0.51f
 
 #define BOUNCES 2
 #define RAYS_PER_BOUNCE 1
 
-const vec3 lightColor = vec3(1.0f, 1.0f, 0.0f) * 0.4f;
+
 
 uniform mat4 uP;
 uniform mat4 uPB;
@@ -198,12 +198,15 @@ vec3 randomOnHemisphere(vec3 normal, float randOffset) {
 	return normalize(onUnitSphere);
 }
 
+const vec3 lightColor = vec3(1.0f, 1.0f, 0.0f) * 0.4f;;
+const float clrStr = 1.0f;/*1.0f / (BOUNCES * 0.5f) / (RAYS_PER_BOUNCE);*/
+
+
 const int OBJECT_COUNT = 6;
 const int types[6] = int[](CUBE, CUBE, SPHERE, SPHERE, SPHERE, CUBE);
 const int models[6] = int[](IDX_MODEL_CUBE0, IDX_MODEL_CUBE1, IDX_MODEL_SPHERE0, IDX_MODEL_SPHERE1, IDX_MODEL_LIGHT0, IDX_MODEL_WALLS);
 const float sizes[6] = float[](halfsize_cube0, halfsize_cube1,radius_sphere0, radius_sphere1, radius_light0, halfsize_walls);
-const float clrStr = 0.0f / (BOUNCES * 0.5f) / (RAYS_PER_BOUNCE);
-const vec3 colors[6] = vec3[](vec3(clrStr, 0.0f, 0.0f), vec3(0.0f, clrStr, 0.0f), vec3(0.0f, 0.0f, clrStr), vec3(clrStr, 0.0f, clrStr), lightColor, vec3(0, 0, 0));
+const vec3 colors[6] = vec3[](vec3(clrStr, 0.0f, 0.0f), vec3(0.0f, clrStr, 0.0f), vec3(0.0f, 0.0f, clrStr), vec3(clrStr, 0.0f, clrStr), vec3(clrStr, clrStr, 0.0f), vec3(0, 0, 0));
 
 
 RayHit raycast(vec3 p0, vec3 p) {
@@ -233,8 +236,10 @@ int calcSize(int bounces) {
 	return amt;
 }
 
+#define LIGHT_COUNT OBJECT_COUNT
+
 int getFrom(int index) {
-	return index == 0 ? -1 : int(floor((index - 1.0f) / float(RAYS_PER_BOUNCE)));
+	return index == 0 ? -1 : int(floor((index - 1.0f) / float(LIGHT_COUNT)));
 }
 
 /*
@@ -245,37 +250,45 @@ int getFrom(int index) {
 
 */
 
+
+
 void main() {
 	//const int arrSize = 273;//calcSize(BOUNCES); //cant use this cuz non-constant array size
 	const int arrSize = 50;
 	RayHit hits[arrSize];
-	int bounces[arrSize];
+	//int bounces[arrSize];
 	int memSlot = 0;
-	int counter = 0;
+	//int counter = 0;
 
 	//int cameFrom[BOUNCES]; //this is for if when it hits something, it sends out multiple rays, instead of just always pointing to the previous one, it needs to point to where it came from
 
-	vec3 lightWorldPos = model_stack[models[LIGHT_INDEX]].modelMat[3].xyz;
+	//vec3 lightWorldPos = model_stack[models[LIGHT_INDEX]].modelMat[3].xyz;
 	mat4 viewToWorld = model_stack[hits[memSlot].index].modelMat * model_stack[hits[memSlot].index].modelViewMatInverse;
 	vec3 cameraWorldPos = (model_stack[0].modelMat * model_stack[0].modelViewMatInverse * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 P_target = vTangentBasis_view[3].xyz;
 
 	//things that need to be recalculated but don't want to have multiple of
-	#define eps max(0.01f, hits[memSlot].t * 0.001f) //how much the ray position should be moved away from the object based on the camera distance
-	#define surfaceWorldPos (model_stack[hits[memSlot].index].modelMat * model_stack[hits[memSlot].index].modelViewMatInverse * vec4(hits[memSlot].pos, 1.0)).xyz
+	#define eps(slot) max(0.01f, hits[slot].t * 0.001f) //how much the ray position should be moved away from the object based on the camera distance
+	#define surfaceWorldPos(slot) (model_stack[hits[slot].index].modelMat * model_stack[hits[slot].index].modelViewMatInverse * vec4(hits[slot].pos, 1.0)).xyz
 
 	vec3 p0 = vec3(0.0f);
 	vec3 p = normalize(P_target - p0);
 
-	hits[memSlot] = raycast(p0 + p * eps, p);
-	hits[memSlot].tWorld = length(lightWorldPos - surfaceWorldPos);
+	hits[memSlot] = raycast(p0 + p * eps(memSlot), p);
+	hits[memSlot].tWorld = 0;//length(lightWorldPos - surfaceWorldPos);
 
-	bounces[memSlot] = 1;
+	if(hits[memSlot].color != vec3(0)) {
+		rtFragColor = vec4(hits[memSlot].color, 1.0f);
+		return;
+	}
+
+	//bounces[memSlot] = 1;
 	int hitSlot = memSlot;
 	memSlot++;
 
-	/*for(int i = 0; i < OBJECT_COUNT; i++) {
+	for(int i = 0; i < OBJECT_COUNT; i++) {
 		if(i == hits[hitSlot].index) continue;
+		//if(i != LIGHT_INDEX) continue;
 
 		vec3 bouncingFrom = hits[hitSlot].pos;
 		vec3 bouncingTo = model_stack[models[i]].modelViewMat[3].xyz;
@@ -283,13 +296,15 @@ void main() {
 		p0 = bouncingFrom;
 		p = normalize(bouncingTo - bouncingFrom);
 
-		hits[memSlot] = raycast(p0 + p * eps, p);
-		hits[memSlot].tWorld = length(model_stack[models[i]].modelMat[3].xyz - surfaceWorldPos);
-		bounces[memSlot] = bounces[getFrom(hitSlot)] + 1;
+		hits[memSlot] = raycast(p0 + p * eps(memSlot - 1), p);
+		hits[memSlot].tWorld = length(model_stack[models[i]].modelMat[3].xyz - surfaceWorldPos(hitSlot));
+		//bounces[memSlot] = bounces[hitSlot] + 1;
 		memSlot++;
-	}*/
+	}
 
-	while(counter < memSlot) {
+
+	
+	/*while(counter < memSlot) {
 
 		if(bounces[counter] < BOUNCES) {
 			
@@ -312,7 +327,6 @@ void main() {
 			hits[memSlot].tWorld = length(lightWorldPos - surfaceWorldPos);
 
 			bounces[memSlot] = bounces[getFrom(counter)] + 1;
-			int hitSlot = memSlot;
 			memSlot++;
 
 			
@@ -332,7 +346,7 @@ void main() {
 
 
 		counter++;
-	}
+	}*/
 	
 
 
@@ -352,7 +366,7 @@ void main() {
 	
 	vec3 finColor = vec3(0.0f);
 
-	for(int i = 0; i < counter; i++) {
+	for(int i = 1; i < LIGHT_COUNT + 1; i++) {
 		if(hits[i].t > 0.0f && hits[i].t < 1.0 / 0.0) {
 			float t = 0.0f;
 			int lastHit = i;
@@ -363,32 +377,11 @@ void main() {
 
 			#define LIGHT_STRENGTH 15.0f
 			#define LIGHT_FALLOFF 1.2f
-			//#define LIGHT_FALLOFF 1000.0f
-			//#define LIGHT_STRENGTH 5.0f
 			float colorMult = max((-t / LIGHT_STRENGTH) + LIGHT_FALLOFF, 0.0f);
 			//float colorMult = max(6.0f * pow(0.85f, t) - 0.0f, 0.0f);
 			finColor += hits[i].color * colorMult;
 		}
 	}
-
-	/*for(int i = 0; i < OBJECT_COUNT; i++) {
-		if(hits[i].t > 0.0f && hits[i].t < 1.0 / 0.0) {
-			float t = 0.0f;
-			int lastHit = i;
-			while(lastHit > 0) {
-				t += hits[lastHit].tWorld;
-				lastHit = getFrom(lastHit);
-			}
-
-			#define LIGHT_STRENGTH 15.0f
-			#define LIGHT_FALLOFF 1.2f
-			//#define LIGHT_FALLOFF 1000.0f
-			//#define LIGHT_STRENGTH 5.0f
-			float colorMult = max((-t / LIGHT_STRENGTH) + LIGHT_FALLOFF, 0.0f);
-			//float colorMult = max(6.0f * pow(0.85f, t) - 0.0f, 0.0f);
-			finColor += hits[i].color * colorMult;
-		}
-	}*/
 
 
 	rtFragColor = vec4(finColor, 1.0f);
@@ -402,5 +395,5 @@ void main() {
 	//debug to see random on hemisphere
 	//rtFragColor.rgb = randomOnHemisphere(hits[0].normal, random(dot(gl_FragCoord.x * gl_FragCoord.y, length(vTangentBasis_view[3].xyz)), 0.01f, 100.0f)) * 0.5f + 0.5f;
 
-	//rtFragColor = vec4(float(hits[1].index) / float(OBJECT_COUNT), 0.0, 0.0, 1.0);
+	//rtFragColor = vec4(float(hits[1].tWorld / 50.0f), 0.0, 0.0, 1.0);
 }
