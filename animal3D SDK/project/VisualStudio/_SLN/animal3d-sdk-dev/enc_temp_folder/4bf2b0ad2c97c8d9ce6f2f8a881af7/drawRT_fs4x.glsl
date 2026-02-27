@@ -87,7 +87,7 @@ const float halfsize_cube1 = 0.5f;
 const float radius_light0 = 2.0f;
 const float halfsize_walls = 3.0f;
 
-#define BOUNCES 2
+#define BOUNCES 20
 #define RAYS_PER_BOUNCE 1
 
 const vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
@@ -109,16 +109,13 @@ RayHit raySphereHit(vec3 p0, vec3 p, vec3 Q, float r) {
 	float b = dot(p, s);
 	float c = dot(s,s) - r * r;
 	float d = b * b - c;
-
+	
 	if(d < 0.0f) return hit;
 	hit.t = b - sqrt(d);
-	if(hit.t < 0.0f) hit.t = b + sqrt(d);
-
 	hit.pos = p0 + hit.t * p;
 	hit.normal = normalize(hit.pos - Q);
 	return hit;
 }
-
 
 //based on https://en.wikipedia.org/wiki/Slab_method
 RayHit rayCubeHit(vec3 p0, vec3 p, int modelIndex, float halfSize) {
@@ -243,7 +240,7 @@ int getFrom(int index) {
 
 void main() {
 	//const int arrSize = 273;//calcSize(BOUNCES); //cant use this cuz non-constant array size
-	const int arrSize = 300;
+	const int arrSize = 50;
 	RayHit hits[arrSize];
 	int bounces[arrSize];
 	int memSlot = 0;
